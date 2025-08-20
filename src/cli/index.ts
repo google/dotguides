@@ -1,0 +1,73 @@
+#!/usr/bin/env node
+
+import { parseArgs } from "util";
+import { fileURLToPath } from "url";
+import { resolve } from "path";
+import { discoverCommand } from "./commands/discover.js";
+import { inspectCommand } from "./commands/inspect.js";
+import { rulesCommand } from "./commands/rules.js";
+import { initCommand } from "./commands/init.js";
+import { mcpCommand } from "./commands/mcp.js";
+
+export async function runCli(argv: string[]) {
+  const { values, positionals } = parseArgs({
+    args: argv.slice(2),
+    options: {
+      help: {
+        type: "boolean",
+        short: "h",
+      },
+      workspace: {
+        type: "string",
+        short: "w",
+      },
+    },
+    allowPositionals: true,
+    strict: false,
+  });
+
+  const command = positionals[0];
+
+  if (values.help || !command) {
+    console.log("Usage: dotguides <command> [options]");
+    console.log("");
+    console.log("Commands:");
+    console.log("  mcp\t\tStart the MCP server");
+    console.log("  discover\tDiscover .guides content in the workspace");
+    console.log("  inspect\tInspect a specific .guides package");
+    console.log("  rules\t\tOutput the rules for the workspace");
+    console.log("  init\t\tInitialize a new .guides package");
+    return;
+  }
+
+  switch (command) {
+    case "discover":
+      await discoverCommand();
+      break;
+    case "inspect":
+      await inspectCommand(positionals[1]);
+      break;
+    case "rules":
+      await rulesCommand();
+      break;
+    case "init":
+      await initCommand();
+      break;
+    case "mcp":
+      const workspace =
+        typeof values.workspace === "string" ? [values.workspace] : undefined;
+      await mcpCommand(workspace);
+      break;
+    default:
+      console.error(`Unknown command: ${command}`);
+      process.exit(1);
+  }
+}
+
+// This allows the CLI to be executed directly, but also imported for tests.
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  runCli(process.argv);
+}

@@ -1,0 +1,36 @@
+{
+  "name": "dotguides",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "dist/index.js",
+  "bin": {
+    "dotguides": "dist/cli/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.13.1",
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.14.2",
+    "@types/js-yaml": "^4.0.9",
+    "@types/glob": "^8.1.0",
+    "memfs": "^4.9.2"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.3",
+    "dotprompt": "^1.1.1",
+    "js-yaml": "^4.1.0",
+    "glob": "^10.4.1"
+  }
+}

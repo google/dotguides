@@ -1,0 +1,6 @@
+- A `dotguides install` that installs contrib guidance where detected for the project.
+- A `dotguides customize [-g] <package_name>` command that allows the user to create per-workspace or user-global guidance for a package. Copies the existing data (if any) and.
+- An `upgrade` guide that walks the user through a major version upgrade of the package.
+- Make `dotguides up` automate the setup process of detecting the correct agent, adding workflows etc. as possible (since MCP workflows aren't always supported). This should also prompt the user to install any discovered contrib guidance that matches their packages.
+- Make `dotguides new` to bootstrap a `.guides` folder in the current directory.
+- Open question: should Dotguides only be for packages or should it also work for general workspaces? Probably the latter -- imagine `setup` is basically like an onboarding guide for a repo.
