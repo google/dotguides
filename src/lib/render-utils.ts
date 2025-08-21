@@ -29,9 +29,15 @@ export function renderDetails(obj: Record<string, any>): string {
 }
 
 export function section(
-  options: { name: string; attrs?: Record<string, string> },
-  content: string
+  options: {
+    name: string;
+    attrs?: Record<string, string>;
+    condition?: any;
+  },
+  content: string | string[] | undefined | null
 ) {
+  if (options.condition === false || !content) return "";
+  if (Array.isArray(content)) content = content.join("\n");
   return `<${options.name}${
     options.attrs
       ? " " +
@@ -39,5 +45,19 @@ export function section(
           .map(([key, value]) => `${key}="${value}"`)
           .join(" ")
       : ""
-  }>\n${content}\n</${options.name}>`;
+  }>\n${content.trim()}\n</${options.name}>`;
+}
+
+export function formatTokenCount(tokens: number): string {
+  if (tokens < 1000) {
+    return tokens.toString();
+  }
+  if (tokens < 1_000_000) {
+    return `${(tokens / 1000).toFixed(1)}K`;
+  }
+  return `${(tokens / 1_000_000).toFixed(1)}M`;
+}
+
+export function countTokens(content: string): number {
+  return Math.round(content.length / 4);
 }

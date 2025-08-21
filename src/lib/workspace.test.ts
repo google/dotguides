@@ -33,9 +33,9 @@ describe("Workspace", () => {
 
     const workspace = await Workspace.load(directories);
 
-    expect(Object.keys(workspace.packages).length).toBe(2);
-    expect(workspace.packages["package-a"]).toBeDefined();
-    expect(workspace.packages["package-b"]).toBeDefined();
+    expect(Object.keys(workspace.packageMap).length).toBe(2);
+    expect(workspace.packageMap["package-a"]).toBeDefined();
+    expect(workspace.packageMap["package-b"]).toBeDefined();
 
     const contexts = workspace.languages;
     expect(contexts).toHaveLength(1);

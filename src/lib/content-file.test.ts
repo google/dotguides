@@ -19,7 +19,7 @@ describe("ContentFile", () => {
     vol.fromJSON({ [filePath]: fileContent });
 
     const contentFile = await ContentFile.load({ path: filePath });
-    const content = contentFile.getContent();
+    const content = contentFile.content;
 
     expect(content).toBe(fileContent);
   });
@@ -33,90 +33,101 @@ describe("ContentFile", () => {
     });
 
     const contentFile = await ContentFile.load({ url });
-    const content = contentFile.getContent();
+    const content = contentFile.content;
 
     expect(global.fetch).toHaveBeenCalledWith(url);
     expect(content).toBe(fileContent);
   });
 
-  it("should parse frontmatter", async () => {
-    const filePath = "/test.md";
-    const fileContent = `---
-title: Test
----
-Hello, world!`;
-    vol.fromJSON({ [filePath]: fileContent });
+  describe("frontmatter parsing", () => {
+    const tests = [
+      {
+        desc: "should parse frontmatter",
+        input: "---\ntitle: Test\n---\nHello, world!",
+        expect: { title: "Test" },
+      },
+      {
+        desc: "should parse frontmatter with leading whitespace",
+        input: "\n---\ntitle: Test\n---\nHello, world!",
+        expect: { title: "Test" },
+      },
+      {
+        desc: "should return empty object if no frontmatter",
+        input: "Hello, world!",
+        expect: {},
+      },
+      {
+        desc: "should not be greedy with frontmatter",
+        input: "---\ndescription: Test\n---\nHello, world!\n---\nfoo: bar\n---",
+        expect: { description: "Test" },
+      },
+    ];
 
-    const contentFile = await ContentFile.load({ path: filePath });
-    const frontmatter = contentFile.getFrontmatter();
-
-    expect(frontmatter).toEqual({ title: "Test" });
+    for (const { desc, input, expect: expected } of tests) {
+      it(desc, async () => {
+        const filePath = "/test.md";
+        vol.fromJSON({ [filePath]: input });
+        const contentFile = await ContentFile.load({ path: filePath });
+        expect(contentFile.frontmatter).toEqual(expected);
+      });
+    }
   });
 
-  it("should return empty object if no frontmatter", async () => {
-    const filePath = "/test.md";
-    const fileContent = "Hello, world!";
-    vol.fromJSON({ [filePath]: fileContent });
+  describe("rendering", () => {
+    const tests = [
+      {
+        desc: "should strip frontmatter when rendering markdown",
+        input: "---\ntitle: Test\n---\nHello, world!",
+        path: "/test.md",
+        expect: "Hello, world!",
+      },
+      {
+        desc: "should identify prompt from file extension",
+        input: "prompt content",
+        path: "/test.prompt",
+        expect: "prompt content",
+      },
+      {
+        desc: "should identify prompt from url extension",
+        input: "prompt content",
+        url: "http://example.com/test.prompt",
+        expect: "prompt content",
+      },
+      {
+        desc: "should identify prompt from content type",
+        input: "prompt content",
+        url: "http://example.com/test",
+        contentType: "text/x-dotprompt",
+        expect: "prompt content",
+      },
+    ];
 
-    const contentFile = await ContentFile.load({ path: filePath });
-    const frontmatter = contentFile.getFrontmatter();
-
-    expect(frontmatter).toEqual({});
-  });
-
-  it("should strip frontmatter when rendering markdown", async () => {
-    const filePath = "/test.md";
-    const fileContent = `---
-title: Test
----
-Hello, world!`;
-    vol.fromJSON({ [filePath]: fileContent });
-
-    const contentFile = await ContentFile.load({ path: filePath });
-    const rendered = contentFile.render({});
-
-    expect(rendered).toBe("Hello, world!");
-  });
-
-  it("should identify prompt from file extension", async () => {
-    const filePath = "/test.prompt";
-    const fileContent = "prompt content";
-    vol.fromJSON({ [filePath]: fileContent });
-
-    const contentFile = await ContentFile.load({ path: filePath });
-    const rendered = contentFile.render({});
-
-    // Placeholder for dotprompt rendering
-    expect(rendered).toBe(fileContent);
-  });
-
-  it("should identify prompt from url extension", async () => {
-    const url = "http://example.com/test.prompt";
-    const fileContent = "prompt content";
-    global.fetch = vi.fn().mockResolvedValue({
-      headers: new Map(),
-      text: () => Promise.resolve(fileContent),
-    });
-
-    const contentFile = await ContentFile.load({ url });
-    const rendered = contentFile.render({});
-
-    // Placeholder for dotprompt rendering
-    expect(rendered).toBe(fileContent);
-  });
-
-  it("should identify prompt from content type", async () => {
-    const url = "http://example.com/test";
-    const fileContent = "prompt content";
-    global.fetch = vi.fn().mockResolvedValue({
-      headers: new Map([["content-type", "text/x-dotprompt"]]),
-      text: () => Promise.resolve(fileContent),
-    });
-
-    const contentFile = await ContentFile.load({ url });
-    const rendered = contentFile.render({});
-
-    // Placeholder for dotprompt rendering
-    expect(rendered).toBe(fileContent);
+    for (const {
+      desc,
+      input,
+      expect: expected,
+      path,
+      url,
+      contentType,
+    } of tests) {
+      it(desc, async () => {
+        let source: { path: string } | { url: string };
+        if (path) {
+          source = { path };
+          vol.fromJSON({ [path]: input });
+        } else {
+          source = { url: url! };
+          global.fetch = vi.fn().mockResolvedValue({
+            headers: new Map(
+              contentType ? [["content-type", contentType]] : []
+            ),
+            text: () => Promise.resolve(input),
+          });
+        }
+        const contentFile = await ContentFile.load(source);
+        const rendered = contentFile.render({});
+        expect(rendered).toBe(expected);
+      });
+    }
   });
 });

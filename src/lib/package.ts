@@ -1,4 +1,4 @@
-import { readdir } from "fs/promises";
+import { readdir, stat } from "fs/promises";
 import { join, parse, relative } from "path";
 import { Command } from "./command.js";
 import { Doc } from "./doc.js";
@@ -40,14 +40,10 @@ export class Package {
         `${type}.prompt`
       );
 
-      if (config?.url) {
-        this.guides[type] = new Guide({ url: config.url }, config);
-      } else if (filePath) {
-        this.guides[type] = new Guide(
-          { path: filePath },
-          config || { description: "" }
-        );
-      }
+      if (config?.url)
+        this.guides[type] = await Guide.load({ url: config.url }, config);
+      else if (filePath)
+        this.guides[type] = await Guide.load({ path: filePath }, config);
     }
 
     // Process docs
@@ -62,7 +58,7 @@ export class Package {
     for (const name of Array.from(docNamesFromConfig)) {
       const config = docsConfig.find((d) => d.name === name);
       if (config?.url) {
-        this.docs.push(new Doc({ url: config.url }, config));
+        this.docs.push(await Doc.load({ url: config.url }, config));
       }
     }
 
@@ -72,7 +68,7 @@ export class Package {
 
     // Commands from filesystem
     const commandsDir = join(this.guidesDir, "commands");
-    try {
+    if (await stat(commandsDir).catch(() => false)) {
       const commandFiles = await readdir(commandsDir);
       for (const commandFile of commandFiles) {
         if (commandFile.endsWith(".md")) {
@@ -83,13 +79,11 @@ export class Package {
             arguments: [],
           };
           this.commands.push(
-            new Command({ path: join(commandsDir, commandFile) }, config)
+            await Command.load({ path: join(commandsDir, commandFile) }, config)
           );
           commandNamesFromConfig.delete(name);
         }
       }
-    } catch {
-      // ignore if dir doesn't exist
     }
 
     // Commands ONLY from config
@@ -98,7 +92,10 @@ export class Package {
       if (config) {
         // This will add commands from JSON that didn't have a file
         this.commands.push(
-          new Command({ path: join(commandsDir, `${config.name}.md`) }, config)
+          await Command.load(
+            { path: join(commandsDir, `${config.name}.md`) },
+            config
+          )
         );
       }
     }
@@ -109,30 +106,36 @@ export class Package {
     baseDir: string,
     docNamesFromConfig: Set<string>
   ): Promise<void> {
-    try {
-      const entries = await readdir(dir, { withFileTypes: true });
-      for (const entry of entries) {
-        const fullPath = join(dir, entry.name);
-        if (entry.isDirectory()) {
-          await this._loadDocsFromDir(fullPath, baseDir, docNamesFromConfig);
-        } else if (entry.isFile() && entry.name.endsWith(".md")) {
-          const relativePath = relative(baseDir, fullPath);
-          const name = join(
-            parse(relativePath).dir,
-            parse(relativePath).name
-          ).replace(/\\/g, "/");
-          const config = this.guidesJSON?.docs?.find(
-            (d) => d.name === name
-          ) || {
-            name,
-            description: "",
-          };
-          this.docs.push(new Doc({ path: fullPath }, config));
-          docNamesFromConfig.delete(name);
-        }
-      }
-    } catch {
-      // ignore if dir doesn't exist
+    if (!(await stat(dir).catch(() => false))) {
+      return;
     }
+    const entries = await readdir(dir, {
+      withFileTypes: true,
+    });
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await this._loadDocsFromDir(fullPath, baseDir, docNamesFromConfig);
+      } else if (
+        entry.isFile() &&
+        (entry.name.endsWith(".md") || entry.name.endsWith(".prompt"))
+      ) {
+        const relativePath = relative(baseDir, fullPath);
+        const name = join(
+          parse(relativePath).dir,
+          parse(relativePath).name
+        ).replace(/\\/g, "/");
+        const config = this.guidesJSON?.docs?.find((d) => d.name === name) || {
+          name,
+          description: "",
+        };
+        this.docs.push(await Doc.load({ path: fullPath }, config));
+        docNamesFromConfig.delete(name);
+      }
+    }
+  }
+
+  doc(name: string) {
+    return this.docs.find((d) => d.config.name === name);
   }
 }

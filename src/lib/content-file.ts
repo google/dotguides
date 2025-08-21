@@ -6,62 +6,56 @@ import { readAny } from "./file-utils.js";
 type ContentFileSource = { path: string } | { url: string };
 
 export class ContentFile {
-  private _content: string | undefined;
-  private _frontmatter: any;
+  readonly content: string;
+  readonly frontmatter: any;
   private _contentType: string | undefined;
 
-  protected constructor(public source: ContentFileSource) {}
+  private constructor(
+    public source: ContentFileSource,
+    content: string,
+    contentType?: string
+  ) {
+    this._contentType = contentType;
+    const match = content.match(/^\s*---\r?\n(.*?)\r?\n---\r?\n/s);
+    if (match && match[1]) {
+      try {
+        this.frontmatter = load(match[1]) || {};
+      } catch (e) {
+        console.error(e);
+        this.frontmatter = {};
+      }
+      this.content = content.substring(match[0].length).trimStart();
+    } else {
+      this.frontmatter = {};
+      this.content = content;
+    }
+  }
 
   static async load(source: ContentFileSource): Promise<ContentFile> {
-    const file = new ContentFile(source);
-    await file._load();
-    return file;
-  }
+    let content: string;
+    let contentType: string | undefined;
 
-  private async _load(): Promise<void> {
-    if ("path" in this.source) {
+    if ("path" in source) {
       const file = await readAny(
         "",
-        `${this.source.path}.md`,
-        `${this.source.path}.prompt`
+        `${source.path}.md`,
+        `${source.path}.prompt`
       );
       if (file) {
-        this.source.path = file.file;
-        this._content = file.content;
+        source.path = file.file;
+        content = file.content;
       } else {
-        this._content = await readFile(this.source.path, "utf-8");
+        content = await readFile(source.path, "utf-8");
       }
     } else {
-      const response = await fetch(this.source.url);
-      this._contentType = response.headers.get("content-type") || undefined;
-      this._content = await response.text();
+      const response = await fetch(source.url);
+      contentType = response.headers.get("content-type") || undefined;
+      content = await response.text();
     }
-  }
-
-  getContent(): string {
-    if (this._content === undefined) {
-      throw new Error(
-        "Content not loaded. Please use ContentFile.load() to instantiate."
-      );
-    }
-    return this._content;
-  }
-
-  getFrontmatter(): any {
-    if (this._frontmatter === undefined) {
-      const content = this.getContent();
-      const match = content.match(/^---\n(.*)\n---\n/s);
-      if (match && match[1]) {
-        this._frontmatter = load(match[1]);
-      } else {
-        this._frontmatter = {};
-      }
-    }
-    return this._frontmatter;
+    return new ContentFile(source, content, contentType);
   }
 
   render(context: object): string {
-    const content = this.getContent();
     let isPrompt = false;
     if ("path" in this.source) {
       isPrompt = extname(this.source.path) === ".prompt";
@@ -74,16 +68,11 @@ export class ContentFile {
 
     if (isPrompt) {
       // TODO: Implement rendering with Dotprompt
-      // const template = new Dotprompt(content);
+      // const template = new Dotprompt(this.content);
       // return template.render(context);
-      return content; // Placeholder
+      return this.content; // Placeholder
     }
 
-    const match = content.match(/^---\n(.*)\n---\n/s);
-    if (match) {
-      return content.substring(match[0].length);
-    }
-
-    return content;
+    return this.content;
   }
 }

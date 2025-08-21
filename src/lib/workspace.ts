@@ -8,7 +8,7 @@ export class Workspace {
   private languageAdapters: LanguageAdapter[] = [
     new JavascriptLanguageAdapter(),
   ];
-  readonly packages: { [name: string]: Package } = {};
+  readonly packageMap: { [name: string]: Package } = {};
 
   constructor(public directories: string[]) {}
 
@@ -26,11 +26,15 @@ export class Workspace {
           this.languages.push(context);
           for (const packageName of context.packages) {
             const pkg = await adapter.loadPackage(directory, packageName);
-            this.packages[pkg.name] = pkg;
+            this.packageMap[pkg.name] = pkg;
           }
         }
       }
     }
+  }
+
+  get packages() {
+    return Object.values(this.packageMap);
   }
 
   get systemInstructions(): string {
@@ -51,23 +55,29 @@ ${this.languages
     })
   )
   .join("\n\n")}${
-        Object.keys(this.packages).length > 0
+        Object.keys(this.packageMap).length > 0
           ? "\n\n" +
             `
 ## Package Usage Guides
 
-${Object.values(this.packages)
+${Object.values(this.packageMap)
   .map((p) =>
-    p.guides["usage"]
-      ? `<package_usage package='${p.name}'>\n${p.guides["usage"]}\n</package_usage>`
-      : undefined
+    section(
+      {
+        name: "package",
+        attrs: { name: p.name },
+        condition: p.guides.usage || p.guides.setup,
+      },
+      [
+        section({ name: "usage_guide" }, p.guides.usage?.content),
+        section({ name: "style_guide" }, p.guides.style?.content),
+      ]
+    )
   )
-  .filter(Boolean)
   .join("\n\n")}
 `.trim()
           : ""
-      }
-`
+      }`.trim()
     );
   }
 }
