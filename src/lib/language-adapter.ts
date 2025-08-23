@@ -1,4 +1,5 @@
 import type { Package } from "./package.js";
+import type { Workspace } from "./workspace.js";
 
 export interface LanguageContext {
   /** This is true if use of the language is detected in a specific directory (e.g. by looking for relevant dependency files). */
@@ -17,5 +18,10 @@ export interface LanguageContext {
 
 export interface LanguageAdapter {
   discover(directory: string): Promise<LanguageContext>;
-  loadPackage(directory: string, name: string): Promise<Package>;
+  loadPackage(
+    workspace: Workspace,
+    directory: string,
+    name: string
+  ): Promise<Package>;
+  discoverContrib?(packages: string[]): Promise<string[]>;
 }

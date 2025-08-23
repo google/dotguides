@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Package } from "./package.js";
 import { vol } from "memfs";
 import type { fs } from "memfs";
+import type { Workspace } from "./workspace.js";
 
 vi.mock("fs/promises", async () => {
   const memfs: { fs: typeof fs } = await vi.importActual("memfs");
@@ -13,20 +14,26 @@ describe("Package", () => {
     vol.reset();
   });
 
-  it("should load guides.json", async () => {
+  it("should load config.json", async () => {
     const guidesJsonContent = {
-      guides: {
-        setup: { description: "Setup guide" },
-      },
+      guides: [{ name: "setup", description: "Setup guide", path: "setup.md" }],
     };
     vol.fromJSON({
-      "/test/package/.guides/guides.json": JSON.stringify(guidesJsonContent),
-      "/test/package/.guides/setup.md": "This is a setup guide.",
+      "/test/package/.guides/config.json": JSON.stringify(guidesJsonContent),
+      "/test/package/setup.md": "This is a setup guide.",
     });
 
-    const pkg = await Package.load("test-package", "/test/package/.guides");
+    const workspace = {
+      directories: ["/test"],
+      languages: [{ packages: ["test-package"] }],
+    } as unknown as Workspace;
+    const pkg = await Package.load(
+      workspace,
+      "test-package",
+      "/test/package/.guides"
+    );
 
-    const setupGuide = pkg.guides["setup"];
+    const setupGuide = pkg.guides.find((g) => g.config.name === "setup");
     expect(setupGuide).toBeDefined();
     expect(setupGuide?.config.description).toBe("Setup guide");
   });
@@ -38,7 +45,15 @@ describe("Package", () => {
         "Authentication API docs.",
     });
 
-    const pkg = await Package.load("test-package", "/test/package/.guides");
+    const workspace = {
+      directories: ["/test"],
+      languages: [{ packages: ["test-package"] }],
+    } as unknown as Workspace;
+    const pkg = await Package.load(
+      workspace,
+      "test-package",
+      "/test/package/.guides"
+    );
 
     expect(pkg.docs.length).toBe(2);
     const docNames = pkg.docs.map((d) => d.config.name).sort();

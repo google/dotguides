@@ -38,15 +38,13 @@ export async function inspectCommand(packageName: string | undefined) {
 
   console.log("\nFeatures:");
 
-  if (Object.keys(pkg.guides).length > 0) {
+  if (pkg.guides.length > 0) {
     console.log("  Guides:");
-    for (const guideName of Object.keys(
-      pkg.guides
-    ) as (keyof typeof pkg.guides)[]) {
-      const guide = pkg.guides[guideName];
-      if (!guide) continue;
+    for (const guide of pkg.guides) {
       const tokens = countTokens(guide.content);
-      console.log(`    - ${guideName} (~${formatTokenCount(tokens)} tokens)`);
+      console.log(
+        `    - ${guide.config.name} (~${formatTokenCount(tokens)} tokens)`
+      );
     }
   }
 

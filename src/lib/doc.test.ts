@@ -20,9 +20,13 @@ describe("Doc", () => {
 
     const doc = await Doc.load(
       { path: filePath },
-      { name: "Test Doc", description: "A test document." }
+      { name: "Test Doc", description: "A test document.", path: filePath }
     );
     expect(doc).toBeInstanceOf(Doc);
-    expect(doc.content).toBe(fileContent);
+    const content = await doc.content;
+    expect(content[0]?.type).toBe("text");
+    if (content[0]?.type === "text") {
+      expect(content[0]?.text).toBe(fileContent);
+    }
   });
 });

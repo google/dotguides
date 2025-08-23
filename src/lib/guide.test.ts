@@ -20,9 +20,13 @@ describe("Guide", () => {
 
     const guide = await Guide.load(
       { path: filePath },
-      { description: "Test Guide" }
+      { name: "usage", description: "Test Guide", path: filePath }
     );
     expect(guide).toBeInstanceOf(Guide);
-    expect(guide.content).toBe(fileContent);
+    const content = await guide.content;
+    expect(content[0]?.type).toBe("text");
+    if (content[0]?.type === "text") {
+      expect(content[0]?.text).toBe(fileContent);
+    }
   });
 });

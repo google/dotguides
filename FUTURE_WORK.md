@@ -4,3 +4,6 @@
 - Make `dotguides up` automate the setup process of detecting the correct agent, adding workflows etc. as possible (since MCP workflows aren't always supported). This should also prompt the user to install any discovered contrib guidance that matches their packages.
 - Make `dotguides new` to bootstrap a `.guides` folder in the current directory.
 - Open question: should Dotguides only be for packages or should it also work for general workspaces? Probably the latter -- imagine `setup` is basically like an onboarding guide for a repo.
+- Maybe have a way to allow libraries to "detect" whether they've already been setup through a simple file existence check or a regex code search.
+- Make it easy to embed resources via Dotprompt, so the setup guide can include certain docs for example.
+- When doing Dotprompt, make the package version accessible from the prompt context

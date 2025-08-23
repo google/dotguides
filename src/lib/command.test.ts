@@ -20,9 +20,13 @@ describe("Command", () => {
 
     const command = await Command.load(
       { path: filePath },
-      { name: "Test Command", description: "A test command.", arguments: [] }
+      {
+        path: filePath,
+        name: "Test Command",
+        description: "A test command.",
+        arguments: [],
+      }
     );
     expect(command).toBeInstanceOf(Command);
-    expect(command.content).toBe(fileContent);
   });
 });

@@ -1,19 +1,20 @@
-import { ContentFile } from "./content-file.js";
-import type { DocConfig } from "./types.js";
+import { loadContentFile, type ContentFile } from "./content-file.js";
+import type { ContentConfig, RenderContext } from "./types.js";
+import type { ContentBlock } from "@modelcontextprotocol/sdk/types.js";
 
 type ContentFileSource = { path: string } | { url: string };
 
 export class Doc {
   private constructor(
     public contentFile: ContentFile,
-    public config: DocConfig
+    public config: ContentConfig
   ) {}
 
   static async load(
     source: ContentFileSource,
-    config: DocConfig
+    config: ContentConfig
   ): Promise<Doc> {
-    const contentFile = await ContentFile.load(source);
+    const contentFile = await loadContentFile(source);
     return new Doc(contentFile, config);
   }
 
@@ -21,8 +22,17 @@ export class Doc {
     return this.contentFile.source;
   }
 
-  get content() {
-    return this.contentFile.content;
+  get content(): Promise<ContentBlock[]> {
+    return this.render({
+      workspaceDir: "",
+      packageVersion: "",
+      dependencyVersion: "",
+      language: {
+        detected: false,
+        name: "",
+        packages: [],
+      },
+    });
   }
 
   get frontmatter() {
@@ -37,7 +47,11 @@ export class Doc {
     return this.contentFile.frontmatter.title || this.config.name;
   }
 
-  render(context: object): string {
+  get name() {
+    return this.config.name;
+  }
+
+  render(context: RenderContext): Promise<ContentBlock[]> {
     return this.contentFile.render(context);
   }
 }

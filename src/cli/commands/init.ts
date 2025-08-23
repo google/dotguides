@@ -4,20 +4,26 @@ import type { DotguidesConfig } from "../../lib/types.js";
 
 export async function initCommand() {
   const guidesDir = join(process.cwd(), ".guides");
-  const guidesJsonPath = join(guidesDir, "guides.json");
+  const guidesJsonPath = join(guidesDir, "config.json");
 
   const guidesJson: DotguidesConfig = {
-    guides: {
-      setup: {
+    guides: [
+      {
+        name: "setup",
         description: "Instructions for setting up the project.",
+        path: "docs/setup.md",
       },
-      style: {
+      {
+        name: "style",
         description: "Guidelines for code style and conventions.",
+        path: "docs/style.md",
       },
-      usage: {
+      {
+        name: "usage",
         description: "Examples and instructions for using the project.",
+        path: "docs/usage.md",
       },
-    },
+    ],
   };
 
   try {

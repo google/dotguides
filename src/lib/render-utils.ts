@@ -31,7 +31,7 @@ export function renderDetails(obj: Record<string, any>): string {
 export function section(
   options: {
     name: string;
-    attrs?: Record<string, string>;
+    attrs?: Record<string, string | undefined>;
     condition?: any;
   },
   content: string | string[] | undefined | null
@@ -42,7 +42,7 @@ export function section(
     options.attrs
       ? " " +
         Object.entries(options.attrs)
-          .map(([key, value]) => `${key}="${value}"`)
+          .map(([key, value]) => (value ? `${key}="${value}"` : ""))
           .join(" ")
       : ""
   }>\n${content.trim()}\n</${options.name}>`;

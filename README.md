@@ -112,7 +112,7 @@ Dotguides will automatically translate this into the full resource URI for the a
 
 To author Dotguides content, you will need to create a `.guides` folder in the root of your project.
 
-### `.guides/guides.json`
+### `.guides/config.json`
 
 Main `.guides` configuration file.
 

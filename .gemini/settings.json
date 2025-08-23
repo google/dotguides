@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "dotguides": {
+      "command": "dotguides",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}

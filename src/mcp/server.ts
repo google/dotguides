@@ -25,6 +25,11 @@ import {
   type ReadResourceResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import { InvalidRequestError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
+import { z, toJSONSchema } from "zod";
+import { read_docs } from "./tools/read_docs.js";
+import { PROMPTS } from "./prompts/index.js";
+
+const TOOLS = [read_docs];
 
 export class DotguidesMcp {
   server: Server;
@@ -81,14 +86,19 @@ export class DotguidesMcp {
 
   async listTools(request: ListToolsRequest): Promise<ListToolsResult> {
     return {
-      tools: [],
+      tools: TOOLS.map((t) => t.mcp),
     };
   }
 
   async callTool(request: CallToolRequest): Promise<CallToolResult> {
-    return {
-      content: [],
-    };
+    const t = TOOLS.find((t) => t.mcp.name === request.params.name);
+    if (!t)
+      throw new InvalidRequestError(
+        `Tool '${request.params.name}' was not found.`
+      );
+    return t.fn(request.params.arguments || ({} as any), {
+      workspace: this.workspace,
+    });
   }
 
   async listResources(
@@ -149,14 +159,19 @@ export class DotguidesMcp {
 
   async listPrompts(request: ListPromptsRequest): Promise<ListPromptsResult> {
     return {
-      prompts: [],
+      prompts: PROMPTS.map((p) => p.mcp),
     };
   }
 
   async getPrompt(request: GetPromptRequest): Promise<GetPromptResult> {
-    return {
-      messages: [],
-    };
+    const p = PROMPTS.find((p) => p.mcp.name === request.params.name);
+    if (!p)
+      throw new InvalidRequestError(
+        `Prompt '${request.params.name}' was not found.`
+      );
+    return p.fn(request.params.arguments || {}, {
+      workspace: this.workspace,
+    });
   }
 
   start(transport: Transport = new StdioServerTransport()) {

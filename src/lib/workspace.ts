@@ -2,6 +2,8 @@ import { Package } from "./package.js";
 import { JavascriptLanguageAdapter } from "./languages/javascript.js";
 import type { LanguageAdapter, LanguageContext } from "./language-adapter.js";
 import { renderDetails, section } from "./render-utils.js";
+import type { Doc } from "./doc.js";
+import { nullable } from "zod";
 
 export class Workspace {
   readonly languages: LanguageContext[] = [];
@@ -25,7 +27,7 @@ export class Workspace {
         if (context.detected) {
           this.languages.push(context);
           for (const packageName of context.packages) {
-            const pkg = await adapter.loadPackage(directory, packageName);
+            const pkg = await adapter.loadPackage(this, directory, packageName);
             this.packageMap[pkg.name] = pkg;
           }
         }
@@ -37,11 +39,80 @@ export class Workspace {
     return Object.values(this.packageMap);
   }
 
-  get systemInstructions(): string {
+  package(name: string): Package | null {
+    return this.packageMap[name] || null;
+  }
+
+  doc(pkg: string | undefined, name: string | undefined): Doc | null {
+    if (!pkg || !name) return null;
+    return this.package(pkg)?.docs.find((d) => name === d.name) || null;
+  }
+
+  async systemInstructions(
+    options: { supportsResources?: boolean; listDocs?: boolean } = {}
+  ): Promise<string> {
+    const packageSections = await Promise.all(
+      Object.values(this.packageMap).map(async (p) => {
+        const usageGuide = p.guides.find((g) => g.config.name === "usage");
+        const styleGuide = p.guides.find((g) => g.config.name === "style");
+        const setupGuide = p.guides.find((g) => g.config.name === "setup");
+
+        let usageContent: string | undefined;
+        if (usageGuide) {
+          const blocks = await usageGuide.content;
+          const firstBlock = blocks[0];
+          if (firstBlock?.type === "text") {
+            usageContent = firstBlock.text;
+          }
+        }
+
+        let styleContent: string | undefined;
+        if (styleGuide) {
+          const blocks = await styleGuide.content;
+          const firstBlock = blocks[0];
+          if (firstBlock?.type === "text") {
+            styleContent = firstBlock.text;
+          }
+        }
+
+        return section(
+          {
+            name: "package",
+            attrs: { name: p.name },
+            condition: usageGuide || setupGuide,
+          },
+          [
+            section({ name: "usage_guide" }, usageContent),
+            section({ name: "style_guide" }, styleContent),
+            options.listDocs
+              ? section(
+                  { name: "docs" },
+                  p.docs.length
+                    ? p.docs
+                        .filter((d) => !d.name.includes("/"))
+                        .map(
+                          (d) =>
+                            `- [${d.title}](docs:${p.name}:${d.config.name})${
+                              d.description ? `: ${d.description}` : ""
+                            }`
+                        )
+                        .join("\n")
+                    : null
+                )
+              : "",
+          ]
+        );
+      })
+    );
+
     return section(
       { name: "dotguides" },
       `
-This workspace uses the *Dotguides* system for providing context-aware coding guidance for open source packages it uses.
+This workspace uses the *Dotguides* system for providing context-aware coding guidance for open source packages it uses.${
+        options.supportsResources
+          ? ""
+          : " Use the `read_docs` tool to load documentation files relevant to specific tasks."
+      }
 
 ## Detected Languages
 
@@ -60,21 +131,9 @@ ${this.languages
             `
 ## Package Usage Guides
 
-${Object.values(this.packageMap)
-  .map((p) =>
-    section(
-      {
-        name: "package",
-        attrs: { name: p.name },
-        condition: p.guides.usage || p.guides.setup,
-      },
-      [
-        section({ name: "usage_guide" }, p.guides.usage?.content),
-        section({ name: "style_guide" }, p.guides.style?.content),
-      ]
-    )
-  )
-  .join("\n\n")}
+The following are the discovered package usage guides for this workspace. FOLLOW THEIR GUIDANCE CAREFULLY. Not all packages have discoverable guidance files.
+
+${packageSections.join("\n\n")}
 `.trim()
           : ""
       }`.trim()

@@ -1,5 +1,9 @@
-import { ContentFile } from "./content-file.js";
-import type { CommandConfig } from "./types.js";
+import type {
+  ContentBlock,
+  ListPromptsResult,
+} from "@modelcontextprotocol/sdk/types.js";
+import { loadContentFile, type ContentFile } from "./content-file.js";
+import type { CommandConfig, RenderContext } from "./types.js";
 
 type ContentFileSource = { path: string } | { url: string };
 
@@ -13,7 +17,7 @@ export class Command {
     source: ContentFileSource,
     config: CommandConfig
   ): Promise<Command> {
-    const contentFile = await ContentFile.load(source);
+    const contentFile = await loadContentFile(source);
     return new Command(contentFile, config);
   }
 
@@ -21,15 +25,18 @@ export class Command {
     return this.contentFile.source;
   }
 
-  get content() {
-    return this.contentFile.content;
-  }
-
   get frontmatter() {
     return this.contentFile.frontmatter;
   }
 
-  render(context: object): string {
-    return this.contentFile.render(context);
+  get arguments(): ListPromptsResult["prompts"][number]["arguments"] {
+    return this.contentFile.frontmatter.arguments;
+  }
+
+  render(
+    args: Record<string, string>,
+    context: RenderContext
+  ): Promise<ContentBlock[]> {
+    return this.contentFile.render({ ...context, ...args });
   }
 }

@@ -1,16 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ContentFile } from "./content-file.js";
+import { loadContentFile, type ContentFileSource } from "./content-file.js";
 import { vol } from "memfs";
 import type { fs } from "memfs";
+import { cachedFetch } from "./cached-fetch.js";
+import type { RenderContext } from "./types.js";
 
 vi.mock("fs/promises", async () => {
   const memfs: { fs: typeof fs } = await vi.importActual("memfs");
   return memfs.fs.promises;
 });
 
-describe("ContentFile", () => {
+vi.mock("./cached-fetch.js");
+
+const mockedCachedFetch = vi.mocked(cachedFetch);
+
+const renderContext: RenderContext = {
+  workspaceDir: "",
+  packageVersion: "",
+  dependencyVersion: "",
+  language: {
+    detected: false,
+    name: "",
+    packages: [],
+  },
+};
+
+describe("loadContentFile", () => {
   beforeEach(() => {
     vol.reset();
+    mockedCachedFetch.mockClear();
   });
 
   it("should read content from a file path", async () => {
@@ -18,25 +36,28 @@ describe("ContentFile", () => {
     const fileContent = "Hello, world!";
     vol.fromJSON({ [filePath]: fileContent });
 
-    const contentFile = await ContentFile.load({ path: filePath });
-    const content = contentFile.content;
+    const contentFile = await loadContentFile({ path: filePath });
+    const content = await contentFile.render(renderContext);
 
-    expect(content).toBe(fileContent);
+    expect(content[0]?.type).toBe("text");
+    if (content[0]?.type === "text") {
+      expect(content[0]?.text).toBe(fileContent);
+    }
   });
 
   it("should fetch content from a URL", async () => {
     const url = "http://example.com/test.md";
     const fileContent = "Hello, from URL!";
-    global.fetch = vi.fn().mockResolvedValue({
-      headers: new Map(),
-      text: () => Promise.resolve(fileContent),
-    });
+    mockedCachedFetch.mockResolvedValue(new Response(fileContent));
 
-    const contentFile = await ContentFile.load({ url });
-    const content = contentFile.content;
+    const contentFile = await loadContentFile({ url });
+    const content = await contentFile.render(renderContext);
 
-    expect(global.fetch).toHaveBeenCalledWith(url);
-    expect(content).toBe(fileContent);
+    expect(mockedCachedFetch).toHaveBeenCalledWith(url);
+    expect(content[0]?.type).toBe("text");
+    if (content[0]?.type === "text") {
+      expect(content[0]?.text).toBe(fileContent);
+    }
   });
 
   describe("frontmatter parsing", () => {
@@ -67,38 +88,38 @@ describe("ContentFile", () => {
       it(desc, async () => {
         const filePath = "/test.md";
         vol.fromJSON({ [filePath]: input });
-        const contentFile = await ContentFile.load({ path: filePath });
+        const contentFile = await loadContentFile({ path: filePath });
         expect(contentFile.frontmatter).toEqual(expected);
       });
     }
   });
 
-  describe("rendering", () => {
+  describe("file type detection", () => {
     const tests = [
-      {
-        desc: "should strip frontmatter when rendering markdown",
-        input: "---\ntitle: Test\n---\nHello, world!",
-        path: "/test.md",
-        expect: "Hello, world!",
-      },
       {
         desc: "should identify prompt from file extension",
         input: "prompt content",
         path: "/test.prompt",
-        expect: "prompt content",
+        expect: "DotpromptFile",
       },
       {
         desc: "should identify prompt from url extension",
         input: "prompt content",
         url: "http://example.com/test.prompt",
-        expect: "prompt content",
+        expect: "DotpromptFile",
       },
       {
         desc: "should identify prompt from content type",
         input: "prompt content",
         url: "http://example.com/test",
         contentType: "text/x-dotprompt",
-        expect: "prompt content",
+        expect: "DotpromptFile",
+      },
+      {
+        desc: "should identify markdown from file extension",
+        input: "markdown content",
+        path: "/test.md",
+        expect: "MarkdownFile",
       },
     ];
 
@@ -111,22 +132,23 @@ describe("ContentFile", () => {
       contentType,
     } of tests) {
       it(desc, async () => {
-        let source: { path: string } | { url: string };
+        let source: ContentFileSource;
         if (path) {
           source = { path };
           vol.fromJSON({ [path]: input });
         } else {
           source = { url: url! };
-          global.fetch = vi.fn().mockResolvedValue({
-            headers: new Map(
-              contentType ? [["content-type", contentType]] : []
-            ),
-            text: () => Promise.resolve(input),
-          });
+          if (contentType) {
+            source.contentType = contentType;
+          }
+          const headers = new Headers();
+          if (contentType) {
+            headers.set("content-type", contentType);
+          }
+          mockedCachedFetch.mockResolvedValue(new Response(input, { headers }));
         }
-        const contentFile = await ContentFile.load(source);
-        const rendered = contentFile.render({});
-        expect(rendered).toBe(expected);
+        const contentFile = await loadContentFile(source);
+        expect(contentFile.constructor.name).toBe(expected);
       });
     }
   });

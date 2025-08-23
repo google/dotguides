@@ -4,119 +4,157 @@ import { Command } from "./command.js";
 import { Doc } from "./doc.js";
 import { existsAny, readAny } from "./file-utils.js";
 import { Guide } from "./guide.js";
-import type { DotguidesConfig } from "./types.js";
+import type { DotguidesConfig, RenderContext } from "./types.js";
+import type { Workspace } from "./workspace.js";
 
 export class Package {
-  private guidesJSON: DotguidesConfig | undefined;
-  readonly guides: { [key in "usage" | "style" | "setup"]?: Guide } = {};
+  readonly guides: Guide[] = [];
+  public config: DotguidesConfig | undefined;
   readonly docs: Doc[] = [];
   readonly commands: Command[] = [];
+  public packageVersion: string | undefined;
+  public dependencyVersion: string | undefined;
 
-  constructor(public name: string, public guidesDir: string) {}
+  constructor(
+    public workspace: Workspace,
+    public name: string,
+    public guidesDir: string
+  ) {}
 
-  static async load(name: string, guidesDir: string): Promise<Package> {
-    const pkg = new Package(name, guidesDir);
+  static async load(
+    workspace: Workspace,
+    name: string,
+    guidesDir: string
+  ): Promise<Package> {
+    const pkg = new Package(workspace, name, guidesDir);
     await pkg._load();
     return pkg;
   }
 
   private async _load(): Promise<void> {
-    const guidesJson = await readAny(this.guidesDir, "guides.json");
-    if (guidesJson) {
-      this.guidesJSON = JSON.parse(guidesJson.content);
+    const packageJsonPath = join(this.guidesDir, "..", "package.json");
+    const packageJsonContent = await readAny(packageJsonPath);
+    if (packageJsonContent) {
+      const packageJson = JSON.parse(packageJsonContent.content);
+      this.packageVersion = packageJson.version;
     }
 
-    // Process guides (setup, usage, style)
-    const guideTypes: ("setup" | "usage" | "style")[] = [
-      "setup",
-      "usage",
-      "style",
-    ] as const;
-    for (const type of guideTypes) {
-      const config = this.guidesJSON?.guides?.[type];
-      const filePath = await existsAny(
-        this.guidesDir,
-        `${type}.md`,
-        `${type}.prompt`
-      );
-
-      if (config?.url)
-        this.guides[type] = await Guide.load({ url: config.url }, config);
-      else if (filePath)
-        this.guides[type] = await Guide.load({ path: filePath }, config);
-    }
-
-    // Process docs
-    const docsConfig = this.guidesJSON?.docs || [];
-    const docNamesFromConfig = new Set(docsConfig.map((d) => d.name));
-
-    // Docs from filesystem
-    const docsDir = join(this.guidesDir, "docs");
-    await this._loadDocsFromDir(docsDir, docsDir, docNamesFromConfig);
-
-    // Docs ONLY from config (URL-based)
-    for (const name of Array.from(docNamesFromConfig)) {
-      const config = docsConfig.find((d) => d.name === name);
-      if (config?.url) {
-        this.docs.push(await Doc.load({ url: config.url }, config));
+    for (const dir of this.workspace.directories) {
+      const workspacePackageJson = await readAny(join(dir, "package.json"));
+      if (workspacePackageJson) {
+        const manifest = JSON.parse(workspacePackageJson.content);
+        const allDeps = {
+          ...manifest.dependencies,
+          ...manifest.devDependencies,
+        };
+        if (allDeps[this.name]) {
+          this.dependencyVersion = allDeps[this.name];
+          break;
+        }
       }
     }
+    const guidesJson = await readAny(this.guidesDir, "config.json");
+    if (guidesJson) {
+      this.config = JSON.parse(guidesJson.content);
+    }
+
+    // Process guides
+    const guidesConfig = this.config?.guides || [];
+    const guidePromises = guidesConfig.map(async (config) => {
+      if (config.url) {
+        return Guide.load({ url: config.url }, config);
+      }
+      if (config.path) {
+        const guidePath = join(this.guidesDir, "..", config.path);
+        if (await stat(guidePath).catch(() => false)) {
+          return Guide.load({ path: guidePath }, config);
+        }
+      }
+      return null;
+    });
+
+    // Process docs
+    const docsConfig = this.config?.docs || [];
+    const docNamesFromConfig = new Set(docsConfig.map((d) => d.name));
+    const docsDir = join(this.guidesDir, "docs");
+    const fileDocPromise = this._getDocsFromDir(
+      docsDir,
+      docsDir,
+      docNamesFromConfig
+    );
+
+    const urlDocPromises = docsConfig
+      .filter((doc) => doc.url && docNamesFromConfig.has(doc.name))
+      .map((doc) => {
+        docNamesFromConfig.delete(doc.name);
+        return Doc.load({ url: doc.url! }, doc);
+      });
 
     // Process commands
-    const commandsConfig = this.guidesJSON?.commands || [];
+    const commandsConfig = this.config?.commands || [];
     const commandNamesFromConfig = new Set(commandsConfig.map((c) => c.name));
-
-    // Commands from filesystem
     const commandsDir = join(this.guidesDir, "commands");
+    const commandPromises: Promise<Command>[] = [];
     if (await stat(commandsDir).catch(() => false)) {
       const commandFiles = await readdir(commandsDir);
       for (const commandFile of commandFiles) {
         if (commandFile.endsWith(".md")) {
           const name = parse(commandFile).name;
+          const path = join(commandsDir, commandFile);
           const config = commandsConfig.find((c) => c.name === name) || {
             name,
             description: "",
             arguments: [],
+            path,
           };
-          this.commands.push(
-            await Command.load({ path: join(commandsDir, commandFile) }, config)
-          );
+          commandPromises.push(Command.load({ path }, config));
           commandNamesFromConfig.delete(name);
         }
       }
     }
-
-    // Commands ONLY from config
     for (const name of Array.from(commandNamesFromConfig)) {
       const config = commandsConfig.find((c) => c.name === name);
-      if (config) {
-        // This will add commands from JSON that didn't have a file
-        this.commands.push(
-          await Command.load(
-            { path: join(commandsDir, `${config.name}.md`) },
+      if (config?.url) {
+        commandPromises.push(Command.load({ url: config.url }, config));
+      } else if (config?.path) {
+        commandPromises.push(
+          Command.load(
+            { path: join(this.guidesDir, "..", config.path) },
             config
           )
         );
       }
     }
+
+    const [guides, fileDocs, urlDocs, commands] = await Promise.all([
+      Promise.all(guidePromises),
+      fileDocPromise,
+      Promise.all(urlDocPromises),
+      Promise.all(commandPromises),
+    ]);
+
+    this.guides.push(...guides.filter((g): g is Guide => !!g));
+    this.docs.push(...fileDocs, ...urlDocs);
+    this.commands.push(...commands);
   }
 
-  private async _loadDocsFromDir(
+  private async _getDocsFromDir(
     dir: string,
     baseDir: string,
     docNamesFromConfig: Set<string>
-  ): Promise<void> {
+  ): Promise<Doc[]> {
     if (!(await stat(dir).catch(() => false))) {
-      return;
+      return [];
     }
     const entries = await readdir(dir, {
       withFileTypes: true,
     });
-    for (const entry of entries) {
+    const promises = entries.map(async (entry) => {
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
-        await this._loadDocsFromDir(fullPath, baseDir, docNamesFromConfig);
-      } else if (
+        return this._getDocsFromDir(fullPath, baseDir, docNamesFromConfig);
+      }
+      if (
         entry.isFile() &&
         (entry.name.endsWith(".md") || entry.name.endsWith(".prompt"))
       ) {
@@ -125,17 +163,55 @@ export class Package {
           parse(relativePath).dir,
           parse(relativePath).name
         ).replace(/\\/g, "/");
-        const config = this.guidesJSON?.docs?.find((d) => d.name === name) || {
+        const config = this.config?.docs?.find((d) => d.name === name) || {
           name,
           description: "",
+          path: fullPath,
         };
-        this.docs.push(await Doc.load({ path: fullPath }, config));
         docNamesFromConfig.delete(name);
+        return Doc.load({ path: fullPath }, config);
       }
-    }
+      return null;
+    });
+
+    return (await Promise.all(promises))
+      .flat()
+      .filter((p): p is Doc => p !== null);
   }
 
   doc(name: string) {
     return this.docs.find((d) => d.config.name === name);
+  }
+
+  renderContext(hints?: RenderContext["hints"]): RenderContext {
+    const language = this.workspace.languages.find((l) =>
+      l.packages.includes(this.name)
+    );
+    if (!language) {
+      throw new Error(
+        `Could not find language context for package ${this.name}`
+      );
+    }
+    if (!this.workspace.directories[0]) {
+      throw new Error("Workspace has no directory");
+    }
+    if (!this.packageVersion) {
+      throw new Error(`Could not determine package version for ${this.name}`);
+    }
+    if (!this.dependencyVersion) {
+      throw new Error(
+        `Could not determine dependency version for ${this.name}`
+      );
+    }
+    const context: RenderContext = {
+      workspaceDir: this.workspace.directories[0],
+      packageVersion: this.packageVersion,
+      dependencyVersion: this.dependencyVersion,
+      language,
+    };
+    if (hints) {
+      context.hints = hints || {};
+    }
+    return context;
   }
 }

@@ -8,6 +8,7 @@ import { inspectCommand } from "./commands/inspect.js";
 import { rulesCommand } from "./commands/rules.js";
 import { initCommand } from "./commands/init.js";
 import { mcpCommand } from "./commands/mcp.js";
+import { upCommand } from "./commands/up.js";
 
 export async function runCli(argv: string[]) {
   const { values, positionals } = parseArgs({
@@ -37,6 +38,7 @@ export async function runCli(argv: string[]) {
     console.log("  inspect\tInspect a specific .guides package");
     console.log("  rules\t\tOutput the rules for the workspace");
     console.log("  init\t\tInitialize a new .guides package");
+    console.log("  up\t\tBootstrap Gemini CLI to use dotguides");
     return;
   }
 
@@ -52,6 +54,9 @@ export async function runCli(argv: string[]) {
       break;
     case "init":
       await initCommand();
+      break;
+    case "up":
+      await upCommand();
       break;
     case "mcp":
       const workspace =

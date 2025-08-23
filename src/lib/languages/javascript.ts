@@ -1,7 +1,13 @@
 import { join } from "path";
+import { stat } from "fs/promises";
 import { Package } from "../package.js";
 import type { LanguageAdapter, LanguageContext } from "../language-adapter.js";
 import { existsAny, readAny } from "../file-utils.js";
+import type { Workspace } from "../workspace.js";
+import { cachedFetch } from "../cached-fetch.js";
+
+const normalize = (pkg: string) =>
+  pkg.startsWith("@") ? pkg.substring(1).replace("/", "__") : pkg;
 
 export class JavascriptLanguageAdapter implements LanguageAdapter {
   async discover(directory: string): Promise<LanguageContext> {
@@ -81,12 +87,9 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
     for (const name in dependencies) {
       const packagePath = join("node_modules", name);
       const guidesDir = join(packagePath, ".guides");
-      const contribPackageName = name.startsWith("@")
-        ? name.substring(1).replace("/", "__")
-        : name;
       const contribPackagePath = join(
         "node_modules",
-        `@dotguides-contrib/${contribPackageName}`
+        `@dotguides-contrib/${normalize(name)}`
       );
       if (await existsAny(directory, guidesDir, contribPackagePath)) {
         context.packages.push(name);
@@ -96,7 +99,11 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
     return context;
   }
 
-  async loadPackage(directory: string, name: string): Promise<Package> {
+  async loadPackage(
+    workspace: Workspace,
+    directory: string,
+    name: string
+  ): Promise<Package> {
     const packagePath = join("node_modules", name);
     const guidesDir = join(packagePath, ".guides");
     const contribPackageName = name.startsWith("@")
@@ -110,9 +117,45 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
     const pkgPath = await existsAny(directory, guidesDir, contribPackagePath);
 
     if (pkgPath) {
-      return await Package.load(name, pkgPath);
+      return await Package.load(workspace, name, pkgPath);
     }
 
     throw new Error(`Could not find guides for package ${name}`);
+  }
+
+  async discoverContrib(packages: string[]): Promise<string[]> {
+    const discovered: string[] = [];
+    const contribPath = process.env.DOTGUIDES_CONTRIB;
+    if (contribPath) {
+      for (const pkg of packages) {
+        const contribDir = join(contribPath, "js", normalize(pkg));
+        try {
+          const stats = await stat(contribDir);
+          if (stats.isDirectory()) {
+            discovered.push(`file:${contribDir}`);
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+      return discovered;
+    }
+
+    const promises = packages.map(async (pkg) => {
+      const url = `https://registry.npmjs.org/@dotguides-contrib/${normalize(
+        pkg
+      )}`;
+      try {
+        const res = await cachedFetch(url, { method: "HEAD" });
+        if (res.ok) {
+          return pkg;
+        }
+      } catch (e) {
+        // ignore
+      }
+      return null;
+    });
+
+    return (await Promise.all(promises)).filter((p): p is string => p !== null);
   }
 }
