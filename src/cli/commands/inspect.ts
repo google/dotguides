@@ -20,7 +20,8 @@ export async function inspectCommand(packageName: string | undefined) {
       } catch {
         // ignore, use directory name
       }
-      pkg = await Package.load(name, ".guides");
+      const workspace = await Workspace.load([process.cwd()]);
+      pkg = await Package.load(workspace, name, ".guides");
     } catch (e) {
       console.error(
         "Package name is required, or run from a directory with a .guides folder."
@@ -41,7 +42,13 @@ export async function inspectCommand(packageName: string | undefined) {
   if (pkg.guides.length > 0) {
     console.log("  Guides:");
     for (const guide of pkg.guides) {
-      const tokens = countTokens(guide.content);
+      const content = await guide.content;
+      const tokens = content.reduce((acc, block) => {
+        if (block.type === "text") {
+          return acc + countTokens(block.text);
+        }
+        return acc;
+      }, 0);
       console.log(
         `    - ${guide.config.name} (~${formatTokenCount(tokens)} tokens)`
       );
@@ -49,10 +56,16 @@ export async function inspectCommand(packageName: string | undefined) {
   }
 
   if (pkg.docs.length > 0) {
-    const totalTokens = pkg.docs.reduce(
-      (acc, doc) => acc + countTokens(doc.content),
-      0
-    );
+    let totalTokens = 0;
+    for (const doc of pkg.docs) {
+      const content = await doc.content;
+      totalTokens += content.reduce((acc, block) => {
+        if (block.type === "text") {
+          return acc + countTokens(block.text);
+        }
+        return acc;
+      }, 0);
+    }
     console.log(
       `  Docs: ${pkg.docs.length} discovered (~${formatTokenCount(
         totalTokens

@@ -7,7 +7,7 @@ export const setup = prompt(
     description: "Get setup instructions for a package.",
     arguments: [{ name: "package", required: true }],
   },
-  (args, { workspace }) => {
+  async (args, { workspace }) => {
     if (!args.package) {
       throw new InvalidRequestError("The 'package' argument is required.");
     }
@@ -21,13 +21,14 @@ export const setup = prompt(
         `Setup guide not found for package '${args.package}'.`
       );
     }
+    const content = await setupGuide.content;
     return {
       messages: [
         {
           role: "user",
           content: {
             type: "text",
-            text: setupGuide.content,
+            text: content.map((c) => ("text" in c ? c.text : "")).join("\n"),
           },
         },
       ],

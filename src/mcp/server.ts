@@ -132,7 +132,7 @@ export class DotguidesMcp {
     };
   }
 
-  readDoc(uri: string): ReadResourceResult {
+  async readDoc(uri: string): Promise<ReadResourceResult> {
     const [_, pkg, name] = uri.split(":");
     if (!pkg || !name)
       throw new InvalidRequestError(
@@ -145,12 +145,12 @@ export class DotguidesMcp {
       throw new InvalidRequestError(
         `Doc '${name}' not found for package '${pkg}'.`
       );
+    const content = await doc.content;
     return {
       contents: [
         {
-          name: doc.config.name,
           uri,
-          text: doc.content,
+          blob: content.map((c) => ("text" in c ? c.text : "")).join("\n"),
           mimeType: "text/plain",
         },
       ],

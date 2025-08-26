@@ -16,25 +16,41 @@ export const read_docs = tool(
         ),
     }),
   },
-  ({ uris }, { workspace }) => {
+  async ({ uris }, { workspace }) => {
     const docs = uris.map((uri) => {
       const [_, pkg, name] = uri.split(":");
       return { pkg, name, doc: workspace.doc(pkg, name) };
     });
 
-    console.error(docs.map((d) => d.doc?.content.substring(0, 200)));
+    const renderedContent = await Promise.all(
+      docs
+        .filter((d) => !!d.doc)
+        .map(async ({ doc, pkg, name }) => {
+          if (!doc) {
+            return null;
+          }
+          const content = await doc.render({
+            workspaceDir: "",
+            packageVersion: "",
+            dependencyVersion: "",
+            language: {
+              detected: false,
+              name: "",
+              packages: [],
+            },
+          });
+          const text = content
+            .map((c) => ("text" in c ? c.text : ""))
+            .join("\n");
+          return {
+            type: "text" as const,
+            text: section({ name: "doc", attrs: { package: pkg, name } }, text),
+          };
+        })
+    );
 
     return {
-      content: docs
-        .filter((d) => !!d.doc)
-        .map(({ doc, pkg, name }) => ({
-          type: "text" as const,
-          text: section(
-            { name: "doc", attrs: { package: pkg, name } },
-            doc ? doc.render({}) : null
-          ),
-        }))
-        .filter((c) => !!c.text),
+      content: renderedContent.filter((c) => !!c),
     };
   }
 );

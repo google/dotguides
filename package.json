@@ -11,8 +11,9 @@
     "dist"
   ],
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest",
     "build": "tsc",
+    "build:watch": "tsc --watch",
     "prepare": "npm run build"
   },
   "keywords": [],

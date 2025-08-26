@@ -39,7 +39,7 @@ export async function upCommand(): Promise<void> {
     JSON.stringify(extensionConfig, null, 2)
   );
 
-  const instructions = workspace.systemInstructions({ listDocs: true });
+  const instructions = await workspace.systemInstructions({ listDocs: true });
   await writeFile(join(extensionDir, "GEMINI.md"), instructions);
 
   console.log(
