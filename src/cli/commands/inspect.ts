@@ -43,12 +43,7 @@ export async function inspectCommand(packageName: string | undefined) {
     console.log("  Guides:");
     for (const guide of pkg.guides) {
       const content = await guide.content;
-      const tokens = content.reduce((acc, block) => {
-        if (block.type === "text") {
-          return acc + countTokens(block.text);
-        }
-        return acc;
-      }, 0);
+      const tokens = countTokens(content);
       console.log(
         `    - ${guide.config.name} (~${formatTokenCount(tokens)} tokens)`
       );
@@ -59,12 +54,7 @@ export async function inspectCommand(packageName: string | undefined) {
     let totalTokens = 0;
     for (const doc of pkg.docs) {
       const content = await doc.content;
-      totalTokens += content.reduce((acc, block) => {
-        if (block.type === "text") {
-          return acc + countTokens(block.text);
-        }
-        return acc;
-      }, 0);
+      totalTokens += countTokens(content);
     }
     console.log(
       `  Docs: ${pkg.docs.length} discovered (~${formatTokenCount(

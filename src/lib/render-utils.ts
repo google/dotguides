@@ -1,3 +1,5 @@
+import type { ContentBlock } from "@modelcontextprotocol/sdk/types.js";
+
 function _render(obj: Record<string, any>, indent: string = ""): string {
   return Object.entries(obj)
     .map(([key, value]) => {
@@ -58,6 +60,14 @@ export function formatTokenCount(tokens: number): string {
   return `${(tokens / 1_000_000).toFixed(1)}M`;
 }
 
-export function countTokens(content: string): number {
-  return Math.round(content.length / 4);
+export function countTokens(content: ContentBlock[]): number {
+  return content.reduce((acc, block) => {
+    if (block.type === "text" && typeof block.text === "string") {
+      return acc + Math.round(block.text.length / 4);
+    }
+    if (block.type === "image") {
+      return acc + 270;
+    }
+    return acc;
+  }, 0);
 }

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import type { ContentBlock } from "@modelcontextprotocol/sdk/types.js";
 import { formatTokenCount, countTokens } from "./render-utils.js";
 
 describe("formatTokenCount", () => {
@@ -33,9 +34,46 @@ describe("formatTokenCount", () => {
 });
 
 describe("countTokens", () => {
-  it("should count tokens based on content length", () => {
-    const content = "This is a test string.";
-    const expected = Math.round(content.length / 4);
-    expect(countTokens(content)).toBe(expected);
-  });
+  const tests: { desc: string; input: ContentBlock[]; expect: number }[] = [
+    {
+      desc: "should count tokens from text blocks",
+      input: [{ type: "text", text: "This is a test string." }],
+      expect: 6,
+    },
+    {
+      desc: "should count tokens from image blocks",
+      input: [{ type: "image", data: "...", mimeType: "image/png" }],
+      expect: 270,
+    },
+    {
+      desc: "should count tokens from a mix of text and image blocks",
+      input: [
+        { type: "text", text: "This is a test string." },
+        { type: "image", data: "...", mimeType: "image/png" },
+        { type: "text", text: "Another test string." },
+      ],
+      expect: 281,
+    },
+    {
+      desc: "should ignore audio blocks",
+      input: [{ type: "audio", data: "...", mimeType: "audio/mp3" }],
+      expect: 0,
+    },
+    {
+      desc: "should handle an empty array",
+      input: [],
+      expect: 0,
+    },
+    {
+      desc: "should handle blocks with no text",
+      input: [{ type: "text", text: "" }],
+      expect: 0,
+    },
+  ];
+
+  for (const { desc, input, expect: expected } of tests) {
+    it(desc, () => {
+      expect(countTokens(input)).toBe(expected);
+    });
+  }
 });

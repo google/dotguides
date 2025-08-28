@@ -16,7 +16,13 @@ describe("Package", () => {
 
   it("should load config.json", async () => {
     const guidesJsonContent = {
-      guides: [{ name: "setup", description: "Setup guide", path: "setup.md" }],
+      guides: [
+        {
+          name: "setup",
+          description: "Setup guide",
+          path: "../setup.md",
+        },
+      ],
     };
     vol.fromJSON({
       "/test/package/.guides/config.json": JSON.stringify(guidesJsonContent),

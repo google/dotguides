@@ -10,11 +10,8 @@ export class Guide {
     public config: GuideConfig
   ) {}
 
-  static async load(
-    source: ContentFileSource,
-    config: GuideConfig
-  ): Promise<Guide> {
-    const contentFile = await loadContentFile(source);
+  static async load(config: GuideConfig): Promise<Guide> {
+    const contentFile = await loadContentFile(config);
     return new Guide(contentFile, config);
   }
 

@@ -3,12 +3,27 @@
 import type { LanguageContext } from "./language-adapter.js";
 
 export type ContentConfig = {
+  /** Identifying name of the content. */
   name: string;
+  /** Concise description of the purpose of the content. */
   description?: string;
+  /** Human-friendly title for the content. */
   title?: string;
-} & ({ path: string; url?: never } | { url: string; path?: never });
+} & (
+  | {
+      /** File path relative to the `.guides` folder, e.g. `../README.md` would be the path to the package README. */
+      path: string;
+      url?: never;
+    }
+  | {
+      /** URL pointing to the content. Content of URL is expected to be plaintext. */
+      url: string;
+      path?: never;
+    }
+);
 
-export type GuideType = "usage" | "style" | "setup" | "upgrade";
+export const GUIDE_TYPES = ["usage", "style", "setup", "upgrade"];
+export type GuideType = (typeof GUIDE_TYPES)[number];
 export type GuideConfig = ContentConfig & { name: GuideType };
 
 export interface CommandArgument {
@@ -23,6 +38,7 @@ export type DocConfig = ContentConfig;
 export type PartialConfig = ContentConfig;
 
 export interface DotguidesConfig {
+  /** Configuration MCP servers that should be installed while using this library. */
   mcpServers?: Record<
     string,
     { command: string; args: string[] } | { url: string }

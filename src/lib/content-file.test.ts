@@ -100,20 +100,20 @@ describe("loadContentFile", () => {
         desc: "should identify prompt from file extension",
         input: "prompt content",
         path: "/test.prompt",
-        expect: "DotpromptFile",
+        expect: "PromptFile",
       },
       {
         desc: "should identify prompt from url extension",
         input: "prompt content",
         url: "http://example.com/test.prompt",
-        expect: "DotpromptFile",
+        expect: "PromptFile",
       },
       {
         desc: "should identify prompt from content type",
         input: "prompt content",
         url: "http://example.com/test",
         contentType: "text/x-dotprompt",
-        expect: "DotpromptFile",
+        expect: "PromptFile",
       },
       {
         desc: "should identify markdown from file extension",

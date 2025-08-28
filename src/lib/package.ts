@@ -4,8 +4,14 @@ import { Command } from "./command.js";
 import { Doc } from "./doc.js";
 import { existsAny, readAny } from "./file-utils.js";
 import { Guide } from "./guide.js";
-import type { DotguidesConfig, RenderContext } from "./types.js";
+import {
+  GUIDE_TYPES,
+  type DotguidesConfig,
+  type RenderContext,
+} from "./types.js";
 import type { Workspace } from "./workspace.js";
+import { Dotprompt } from "dotprompt";
+import { existsSync, readFileSync } from "fs";
 
 export class Package {
   readonly guides: Guide[] = [];
@@ -14,12 +20,25 @@ export class Package {
   readonly commands: Command[] = [];
   public packageVersion: string | undefined;
   public dependencyVersion: string | undefined;
+  readonly dotprompt: Dotprompt;
 
   constructor(
     public workspace: Workspace,
     public name: string,
     public guidesDir: string
-  ) {}
+  ) {
+    this.dotprompt = new Dotprompt({
+      partialResolver(partialName) {
+        const partialPath = join(guidesDir, "partials", `_${partialName}`);
+        try {
+          return readFileSync(partialPath, { encoding: "utf8" });
+        } catch (e) {
+          return null;
+        }
+      },
+      helpers: {},
+    });
+  }
 
   static async load(
     workspace: Workspace,
@@ -60,18 +79,27 @@ export class Package {
 
     // Process guides
     const guidesConfig = this.config?.guides || [];
-    const guidePromises = guidesConfig.map(async (config) => {
-      if (config.url) {
-        return Guide.load({ url: config.url }, config);
-      }
-      if (config.path) {
-        const guidePath = join(this.guidesDir, "..", config.path);
-        if (await stat(guidePath).catch(() => false)) {
-          return Guide.load({ path: guidePath }, config);
+    const guidePromises = [
+      ...guidesConfig.map(async (config) => {
+        if (config.url) {
+          return Guide.load(config);
         }
-      }
-      return null;
-    });
+        if (config.path) {
+          const guidePath = join(this.guidesDir, config.path);
+          return Guide.load({ ...config, path: guidePath });
+        }
+        return null;
+      }),
+      ...GUIDE_TYPES.map(async (builtin) => {
+        const discoveredGuide = await existsAny(
+          this.guidesDir,
+          `${builtin}.md`,
+          `${builtin}.prompt`
+        );
+        if (!discoveredGuide) return null;
+        return Guide.load({ name: builtin, path: discoveredGuide });
+      }),
+    ];
 
     // Process docs
     const docsConfig = this.config?.docs || [];
@@ -118,10 +146,7 @@ export class Package {
         commandPromises.push(Command.load({ url: config.url }, config));
       } else if (config?.path) {
         commandPromises.push(
-          Command.load(
-            { path: join(this.guidesDir, "..", config.path) },
-            config
-          )
+          Command.load({ path: join(this.guidesDir, config.path) }, config)
         );
       }
     }

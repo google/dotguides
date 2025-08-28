@@ -18,10 +18,11 @@ describe("Guide", () => {
     const fileContent = "guide content";
     vol.fromJSON({ [filePath]: fileContent });
 
-    const guide = await Guide.load(
-      { path: filePath },
-      { name: "usage", description: "Test Guide", path: filePath }
-    );
+    const guide = await Guide.load({
+      name: "usage",
+      description: "Test Guide",
+      path: filePath,
+    });
     expect(guide).toBeInstanceOf(Guide);
     const content = await guide.content;
     expect(content[0]?.type).toBe("text");

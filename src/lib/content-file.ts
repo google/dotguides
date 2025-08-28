@@ -2,7 +2,7 @@ import { extname } from "path";
 import type { ContentBlock } from "@modelcontextprotocol/sdk/types.js";
 import type { RenderContext } from "./types.js";
 import { MarkdownFile } from "./markdown-file.js";
-import { DotpromptFile } from "./dotprompt-file.js";
+import { PromptFile } from "./prompt-file.js";
 
 export type ContentFileSource =
   | { path: string }
@@ -28,7 +28,7 @@ export async function loadContentFile(
   }
 
   if (isPrompt) {
-    return DotpromptFile.load(source);
+    return PromptFile.load(source);
   }
   return MarkdownFile.load(source);
 }
