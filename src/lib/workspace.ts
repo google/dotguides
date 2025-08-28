@@ -57,7 +57,6 @@ export class Workspace {
       Object.values(this.packageMap).map(async (p) => {
         const usageGuide = p.guides.find((g) => g.config.name === "usage");
         const styleGuide = p.guides.find((g) => g.config.name === "style");
-        const setupGuide = p.guides.find((g) => g.config.name === "setup");
 
         let usageContent: string | undefined;
         if (usageGuide) {

@@ -1,5 +1,9 @@
-import { Dotprompt } from "dotprompt";
-import type { ContentFile, ContentFileSource } from "./content-file.js";
+import { Dotprompt, type ParsedPrompt } from "dotprompt";
+import {
+  loadContentFileText,
+  type ContentFile,
+  type ContentFileSource,
+} from "./content-file.js";
 import { resolve } from "path";
 import type { RenderContext } from "./types.js";
 import type { ContentBlock } from "@modelcontextprotocol/sdk/types.js";
@@ -8,9 +12,14 @@ import type { Package } from "./package.js";
 export class PromptFile implements ContentFile {
   readonly frontmatter: Record<string, any> = {};
   readonly pkg: Package;
+  readonly source: string;
+  readonly prompt: ParsedPrompt;
 
-  private constructor(public source: ContentFileSource, pkg: Package) {
+  private constructor(pkg: Package, source: string) {
+    this.source = source;
     this.pkg = pkg;
+    this.prompt = pkg.dotprompt.parse(source);
+    this.frontmatter = this.prompt.raw || {};
   }
 
   private get dotprompt() {
@@ -22,14 +31,11 @@ export class PromptFile implements ContentFile {
     source: ContentFileSource
   ): Promise<PromptFile> {
     const finalSource = { ...source };
-    if ("path" in finalSource) {
-      finalSource.path = resolve(pkg.guidesDir, finalSource.path);
-    }
-    return new PromptFile(finalSource, pkg);
+    const sourceText = await loadContentFileText(pkg.guidesDir, source);
+    return new PromptFile(pkg, sourceText);
   }
 
   async render(context: RenderContext): Promise<ContentBlock[]> {
-    // TODO: Implement rendering with Dotprompt
-    return [];
+    this.dotprompt.render(this.source, { context });
   }
 }
