@@ -41,6 +41,12 @@ export class PromptFile implements ContentFile {
   }
 
   async render(context: RenderContext): Promise<ContentBlock[]> {
-    return [];
+    const result = await this.dotprompt.render(this.sourceText, { context });
+    return result.messages.reduce<ContentBlock[]>((acc, m) => {
+      for (const part of m.content) {
+        if (part.text) acc.push({ type: "text", text: part.text });
+      }
+      return acc;
+    }, []);
   }
 }

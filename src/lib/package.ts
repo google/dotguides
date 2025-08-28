@@ -30,9 +30,13 @@ export class Package {
   ) {
     this.dotprompt = new Dotprompt({
       partialResolver(partialName) {
-        const partialPath = join(guidesDir, "partials", `_${partialName}`);
+        const partialPath = join(
+          guidesDir,
+          "partials",
+          `${partialName}.prompt`
+        );
         try {
-          return readFileSync(partialPath, { encoding: "utf8" });
+          return readFileSync(partialPath, { encoding: "utf8" }) || " ";
         } catch (e) {
           return null;
         }
