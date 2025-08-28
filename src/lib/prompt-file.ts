@@ -12,13 +12,19 @@ import type { Package } from "./package.js";
 export class PromptFile implements ContentFile {
   readonly frontmatter: Record<string, any> = {};
   readonly pkg: Package;
-  readonly source: string;
+  readonly source: ContentFileSource;
+  readonly sourceText: string;
   readonly prompt: ParsedPrompt;
 
-  private constructor(pkg: Package, source: string) {
+  private constructor(
+    pkg: Package,
+    source: ContentFileSource,
+    sourceText: string
+  ) {
     this.source = source;
+    this.sourceText = sourceText;
     this.pkg = pkg;
-    this.prompt = pkg.dotprompt.parse(source);
+    this.prompt = pkg.dotprompt.parse(sourceText);
     this.frontmatter = this.prompt.raw || {};
   }
 
@@ -30,12 +36,11 @@ export class PromptFile implements ContentFile {
     pkg: Package,
     source: ContentFileSource
   ): Promise<PromptFile> {
-    const finalSource = { ...source };
     const sourceText = await loadContentFileText(pkg.guidesDir, source);
-    return new PromptFile(pkg, sourceText);
+    return new PromptFile(pkg, source, sourceText);
   }
 
   async render(context: RenderContext): Promise<ContentBlock[]> {
-    this.dotprompt.render(this.source, { context });
+    return [];
   }
 }

@@ -80,7 +80,7 @@ export class Workspace {
           {
             name: "package",
             attrs: { name: p.name },
-            condition: usageGuide || setupGuide,
+            condition: usageGuide || styleGuide,
           },
           [
             section({ name: "usage_guide" }, usageContent),
