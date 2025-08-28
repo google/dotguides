@@ -51,28 +51,11 @@ export class DartLanguageAdapter implements LanguageAdapter {
       }
     }
 
-    // Use pubspec.lock for formal dependency resolution
-
-    const pubspecLockContent = await readAny(directory, "pubspec.lock");
-    if (pubspecLockContent) {
-      try {
-        const lockFile = load(pubspecLockContent.content) as any;
-        const dependencies = this._parseLockFileDependencies(lockFile);
-        
-        for (const dep of dependencies) {
-          // Get all possible package directories for this dependency
-          const packageDirectories = this._getPackageDirectories(
-            { source: dep.source, version: dep.version, description: dep.path ? { path: dep.path } : undefined },
-            dep.name
-          );
-          
-          // Check if any of the directories exist
-          if (packageDirectories.length > 0 && await existsAny(null, ...packageDirectories)) {
-            context.packages.push(dep.name);
-          }
-        }
-      } catch (e) {
-        // Ignore parsing errors
+    // Use .dart_tool/package_config.json for canonical package list and locations
+    const packages = await this._parsePackageConfig(directory);
+    for (const pkg of packages) {
+      if (await existsAny(null, ...pkg.guidesDirectories)) {
+        context.packages.push(pkg.name);
       }
     }
 
@@ -84,40 +67,29 @@ export class DartLanguageAdapter implements LanguageAdapter {
     directory: string,
     name: string
   ): Promise<Package> {
-    // Get package version from pubspec.lock
-    const pubspecLockContent = await readAny(directory, "pubspec.lock");
-    if (!pubspecLockContent) {
-      throw new Error(`Could not find pubspec.lock for package ${name}`);
+    // Check if package_config.json exists first
+    const packageConfigContent = await readAny(directory, ".dart_tool/package_config.json");
+    if (!packageConfigContent) {
+      throw new Error(`Could not find .dart_tool/package_config.json for package ${name}`);
     }
 
-    try {
-      const lockFile = load(pubspecLockContent.content) as any;
-      const packageInfo = lockFile?.packages?.[name];
-      
-      if (!packageInfo) {
-        throw new Error(`Package ${name} not found in pubspec.lock`);
-      }
-
-      const source = packageInfo.source;
-      
-      if (source !== 'hosted' && source !== 'path') {
-        throw new Error(`Package ${name} has unsupported source type: ${source}`);
-      }
-
-      // Get all possible package directories for this dependency
-      const packageDirectories = this._getPackageDirectories(packageInfo, name);
-      
-      // Find the first existing directory
-      const pkgPath = await existsAny(null, ...packageDirectories);
-
-      if (pkgPath) {
-        return await Package.load(workspace, name, pkgPath);
-      }
-
-      throw new Error(`Could not find guides for package ${name}`);
-    } catch (e) {
-      throw new Error(`Could not load package ${name}: ${e instanceof Error ? e.message : String(e)}`);
+    // Get package location from .dart_tool/package_config.json
+    const packages = await this._parsePackageConfig(directory);
+    
+    // Find the specific package
+    const pkg = packages.find(p => p.name === name);
+    if (!pkg) {
+      throw new Error(`Package ${name} not found in package_config.json`);
     }
+
+    // Find the first existing guides directory
+    const pkgPath = await existsAny(null, ...pkg.guidesDirectories);
+
+    if (pkgPath) {
+      return await Package.load(workspace, name, pkgPath);
+    }
+
+    throw new Error(`Could not find guides for package ${name}`);
   }
 
   async discoverContrib(packages: string[]): Promise<string[]> {
@@ -156,78 +128,44 @@ export class DartLanguageAdapter implements LanguageAdapter {
     return (await Promise.all(promises)).filter((p): p is string => p !== null);
   }
 
-    // Supports both 'hosted' packages from pub.dev and 'path' packages from local directories.
-    // TODO: support additional source types like 'git' if needed.
-    // Apparently there is no tooling to support package dependency=>cached package directory
-    // resolution yet. So we manually implement the resolution logic here.
-  private _getPackageDirectories(packageInfo: any, packageName: string): string[] {
-    const directories: string[] = [];
-    const source = packageInfo.source;
-    
-    if (source === 'hosted') {
-      const version = packageInfo.version;
-      const pubCache = process.env.PUB_CACHE || join(process.env.HOME || "~", ".pub-cache");
-      
-      // Main package directory
-      const packageDir = join(pubCache, "hosted", "pub.dev", `${packageName}-${version}`);
-      const guidesDir = join(packageDir, ".guides");
-      directories.push(guidesDir);
-      
-      // Contrib package directory
-      const contribPackageName = `dotguides_contrib_${normalize(packageName)}`;
-      const contribPackageDir = join(pubCache, "hosted", "pub.dev", `${contribPackageName}-${version}`);
-      const contribGuidesDir = join(contribPackageDir, ".guides");
-      directories.push(contribGuidesDir);
-      
-    } else if (source === 'path') {
-      const packagePath = packageInfo.description?.path;
-      if (packagePath) {
-        const guidesDir = join(packagePath, ".guides");
-        directories.push(guidesDir);
-      }
+  private async _parsePackageConfig(directory: string): Promise<Array<{
+    name: string,
+    rootPath: string,
+    guidesDirectories: string[]
+  }>> {
+    const packageConfigContent = await readAny(directory, ".dart_tool/package_config.json");
+    if (!packageConfigContent) {
+      return [];
     }
-    
-    return directories;
+
+    try {
+      const packageConfig = JSON.parse(packageConfigContent.content);
+      const packages = packageConfig.packages || [];
+      
+      return packages
+        .filter((pkg: any) => pkg.name && pkg.rootUri)
+        .map((pkg: any) => {
+          // Convert file:// URI to local path
+          const rootPath = pkg.rootUri.startsWith('file://') 
+            ? pkg.rootUri.substring(7) // Remove 'file://' prefix
+            : pkg.rootUri;
+          
+          const guidesDir = join(rootPath, ".guides");
+          
+          // Also check for contrib packages (if this is a hosted package)
+          const contribPackageName = `dotguides_contrib_${normalize(pkg.name)}`;
+          const contribRootPath = rootPath.replace(`/${pkg.name}-`, `/${contribPackageName}-`);
+          const contribGuidesDir = join(contribRootPath, ".guides");
+          
+          return {
+            name: pkg.name,
+            rootPath,
+            guidesDirectories: [guidesDir, contribGuidesDir]
+          };
+        });
+    } catch (e) {
+      return [];
+    }
   }
 
-  private _parseLockFileDependencies(lockFile: any): Array<{
-    name: string, 
-    version: string, 
-    source: string, 
-    path?: string
-  }> {
-    const dependencies: Array<{
-      name: string, 
-      version: string, 
-      source: string, 
-      path?: string
-    }> = [];
-    
-    if (lockFile?.packages && typeof lockFile.packages === 'object') {
-      for (const [packageName, packageInfo] of Object.entries(lockFile.packages)) {
-        const info = packageInfo as any;
-        if (info?.version && info?.source) {
-          const dep: {
-            name: string, 
-            version: string, 
-            source: string, 
-            path?: string
-          } = {
-            name: packageName,
-            version: info.version,
-            source: info.source
-          };
-          
-          // For path-based packages, extract the path from description
-          if (info.source === 'path' && info.description?.path) {
-            dep.path = info.description.path;
-          }
-          
-          dependencies.push(dep);
-        }
-      }
-    }
-    
-    return dependencies;
-  }
 }
