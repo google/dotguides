@@ -4,6 +4,7 @@ import { vol } from "memfs";
 import type { fs } from "memfs";
 import { cachedFetch } from "./cached-fetch.js";
 import type { RenderContext } from "./types.js";
+import type { Package } from "./package.js";
 
 vi.mock("fs/promises", async () => {
   const memfs: { fs: typeof fs } = await vi.importActual("memfs");
@@ -13,6 +14,10 @@ vi.mock("fs/promises", async () => {
 vi.mock("./cached-fetch.js");
 
 const mockedCachedFetch = vi.mocked(cachedFetch);
+
+const mockPackage = {
+  name: "test-pkg",
+} as Package;
 
 const renderContext: RenderContext = {
   workspaceDir: "",
@@ -36,7 +41,7 @@ describe("loadContentFile", () => {
     const fileContent = "Hello, world!";
     vol.fromJSON({ [filePath]: fileContent });
 
-    const contentFile = await loadContentFile({ path: filePath });
+    const contentFile = await loadContentFile(mockPackage, { path: filePath });
     const content = await contentFile.render(renderContext);
 
     expect(content[0]?.type).toBe("text");
@@ -50,7 +55,7 @@ describe("loadContentFile", () => {
     const fileContent = "Hello, from URL!";
     mockedCachedFetch.mockResolvedValue(new Response(fileContent));
 
-    const contentFile = await loadContentFile({ url });
+    const contentFile = await loadContentFile(mockPackage, { url });
     const content = await contentFile.render(renderContext);
 
     expect(mockedCachedFetch).toHaveBeenCalledWith(url);
@@ -88,7 +93,9 @@ describe("loadContentFile", () => {
       it(desc, async () => {
         const filePath = "/test.md";
         vol.fromJSON({ [filePath]: input });
-        const contentFile = await loadContentFile({ path: filePath });
+        const contentFile = await loadContentFile(mockPackage, {
+          path: filePath,
+        });
         expect(contentFile.frontmatter).toEqual(expected);
       });
     }
@@ -147,7 +154,7 @@ describe("loadContentFile", () => {
           }
           mockedCachedFetch.mockResolvedValue(new Response(input, { headers }));
         }
-        const contentFile = await loadContentFile(source);
+        const contentFile = await loadContentFile(mockPackage, source);
         expect(contentFile.constructor.name).toBe(expected);
       });
     }

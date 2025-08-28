@@ -7,3 +7,5 @@
 - Maybe have a way to allow libraries to "detect" whether they've already been setup through a simple file existence check or a regex code search.
 - Make it easy to embed resources via Dotprompt, so the setup guide can include certain docs for example.
 - When doing Dotprompt, make the package version accessible from the prompt context
+- Support `~/.guides/{lang}/{package}` for custom contrib guides. Question: are these overrides or fallbacks?
+- Support ~/.guides/aliases.json`for some kind of custom aliasing (e.g. load guidance for`foo`package from`my-custom-foo-guides` package).

@@ -1,5 +1,5 @@
 import { readFile, stat } from "fs/promises";
-import { join } from "path";
+import { join, resolve } from "path";
 
 /**
  * Checks if any of the specified files exists relative to the specified root.
@@ -12,7 +12,7 @@ export async function existsAny(
   ...files: string[]
 ): Promise<string | false> {
   for (const file of files) {
-    const path = root ? join(root, file) : file;
+    const path = root ? resolve(root, file) : file;
     try {
       await stat(path);
       return path;

@@ -20,13 +20,13 @@ describe("Package", () => {
         {
           name: "setup",
           description: "Setup guide",
-          path: "../setup.md",
+          path: "setup.md",
         },
       ],
     };
     vol.fromJSON({
       "/test/package/.guides/config.json": JSON.stringify(guidesJsonContent),
-      "/test/package/setup.md": "This is a setup guide.",
+      "/test/package/.guides/setup.md": "This is a setup guide.",
     });
 
     const workspace = {
@@ -64,5 +64,42 @@ describe("Package", () => {
     expect(pkg.docs.length).toBe(2);
     const docNames = pkg.docs.map((d) => d.config.name).sort();
     expect(docNames).toEqual(["api/authentication", "getting-started"]);
+  });
+
+  it("should prioritize configured docs over discovered docs", async () => {
+    const guidesJsonContent = {
+      docs: [
+        {
+          name: "foo",
+          path: "foo-configured.md",
+        },
+      ],
+    };
+    vol.fromJSON({
+      "/test/package/.guides/config.json": JSON.stringify(guidesJsonContent),
+      "/test/package/.guides/docs/foo.md": "This is the discovered foo doc.",
+      "/test/package/.guides/foo-configured.md":
+        "This is the configured foo doc.",
+    });
+
+    const workspace = {
+      directories: ["/test"],
+      languages: [{ packages: ["test-package"] }],
+    } as unknown as Workspace;
+    const pkg = await Package.load(
+      workspace,
+      "test-package",
+      "/test/package/.guides"
+    );
+
+    expect(pkg.docs.length).toBe(1);
+    const fooDoc = pkg.docs[0];
+    expect(fooDoc).toBeDefined();
+    if (fooDoc) {
+      expect(fooDoc.name).toBe("foo");
+      expect(fooDoc.source).toMatchObject({
+        path: "/test/package/.guides/foo-configured.md",
+      });
+    }
   });
 });

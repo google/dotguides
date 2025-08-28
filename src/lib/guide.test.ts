@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Guide } from "./guide.js";
 import { vol } from "memfs";
 import type { fs } from "memfs";
+import type { Package } from "./package.js";
 
 vi.mock("fs/promises", async () => {
   const memfs: { fs: typeof fs } = await vi.importActual("memfs");
@@ -18,7 +19,8 @@ describe("Guide", () => {
     const fileContent = "guide content";
     vol.fromJSON({ [filePath]: fileContent });
 
-    const guide = await Guide.load({
+    const mockPackage = { name: "test-pkg" } as Package;
+    const guide = await Guide.load(mockPackage, {
       name: "usage",
       description: "Test Guide",
       path: filePath,

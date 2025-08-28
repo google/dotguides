@@ -4,6 +4,7 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import { loadContentFile, type ContentFile } from "./content-file.js";
 import type { CommandConfig, RenderContext } from "./types.js";
+import type { Package } from "./package.js";
 
 type ContentFileSource = { path: string } | { url: string };
 
@@ -14,10 +15,11 @@ export class Command {
   ) {}
 
   static async load(
+    pkg: Package,
     source: ContentFileSource,
     config: CommandConfig
   ): Promise<Command> {
-    const contentFile = await loadContentFile(source);
+    const contentFile = await loadContentFile(pkg, source);
     return new Command(contentFile, config);
   }
 

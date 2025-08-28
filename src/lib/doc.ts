@@ -1,8 +1,11 @@
-import { loadContentFile, type ContentFile } from "./content-file.js";
+import {
+  loadContentFile,
+  type ContentFile,
+  type ContentFileSource,
+} from "./content-file.js";
 import type { ContentConfig, RenderContext } from "./types.js";
 import type { ContentBlock } from "@modelcontextprotocol/sdk/types.js";
-
-type ContentFileSource = { path: string } | { url: string };
+import type { Package } from "./package.js";
 
 export class Doc {
   private constructor(
@@ -10,11 +13,9 @@ export class Doc {
     public config: ContentConfig
   ) {}
 
-  static async load(
-    source: ContentFileSource,
-    config: ContentConfig
-  ): Promise<Doc> {
-    const contentFile = await loadContentFile(source);
+  static async load(pkg: Package, config: ContentConfig): Promise<Doc> {
+    const { name, description, title, ...source } = config;
+    const contentFile = await loadContentFile(pkg, source as ContentFileSource);
     return new Doc(contentFile, config);
   }
 

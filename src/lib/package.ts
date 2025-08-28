@@ -1,11 +1,12 @@
 import { readdir, stat } from "fs/promises";
-import { join, parse, relative } from "path";
+import { join, parse, relative, resolve } from "path";
 import { Command } from "./command.js";
 import { Doc } from "./doc.js";
 import { existsAny, readAny } from "./file-utils.js";
 import { Guide } from "./guide.js";
 import {
   GUIDE_TYPES,
+  type ContentConfig,
   type DotguidesConfig,
   type RenderContext,
 } from "./types.js";
@@ -81,12 +82,8 @@ export class Package {
     const guidesConfig = this.config?.guides || [];
     const guidePromises = [
       ...guidesConfig.map(async (config) => {
-        if (config.url) {
-          return Guide.load(config);
-        }
-        if (config.path) {
-          const guidePath = join(this.guidesDir, config.path);
-          return Guide.load({ ...config, path: guidePath });
+        if (config.url || config.path) {
+          return Guide.load(this, config);
         }
         return null;
       }),
@@ -97,26 +94,21 @@ export class Package {
           `${builtin}.prompt`
         );
         if (!discoveredGuide) return null;
-        return Guide.load({ name: builtin, path: discoveredGuide });
+        return Guide.load(this, { name: builtin, path: discoveredGuide });
       }),
     ];
 
     // Process docs
     const docsConfig = this.config?.docs || [];
     const docNamesFromConfig = new Set(docsConfig.map((d) => d.name));
-    const docsDir = join(this.guidesDir, "docs");
-    const fileDocPromise = this._getDocsFromDir(
+    const docsDir = resolve(this.guidesDir, "docs");
+    const discoveredDocConfigsPromise = this._getDocsFromDir(
       docsDir,
       docsDir,
       docNamesFromConfig
     );
 
-    const urlDocPromises = docsConfig
-      .filter((doc) => doc.url && docNamesFromConfig.has(doc.name))
-      .map((doc) => {
-        docNamesFromConfig.delete(doc.name);
-        return Doc.load({ url: doc.url! }, doc);
-      });
+    const configuredDocConfigs = docsConfig;
 
     // Process commands
     const commandsConfig = this.config?.commands || [];
@@ -135,7 +127,7 @@ export class Package {
             arguments: [],
             path,
           };
-          commandPromises.push(Command.load({ path }, config));
+          commandPromises.push(Command.load(this, { path }, config));
           commandNamesFromConfig.delete(name);
         }
       }
@@ -143,23 +135,24 @@ export class Package {
     for (const name of Array.from(commandNamesFromConfig)) {
       const config = commandsConfig.find((c) => c.name === name);
       if (config?.url) {
-        commandPromises.push(Command.load({ url: config.url }, config));
+        commandPromises.push(Command.load(this, { url: config.url }, config));
       } else if (config?.path) {
-        commandPromises.push(
-          Command.load({ path: join(this.guidesDir, config.path) }, config)
-        );
+        commandPromises.push(Command.load(this, { path: config.path }, config));
       }
     }
 
-    const [guides, fileDocs, urlDocs, commands] = await Promise.all([
+    const [guides, discoveredDocConfigs, commands] = await Promise.all([
       Promise.all(guidePromises),
-      fileDocPromise,
-      Promise.all(urlDocPromises),
+      discoveredDocConfigsPromise,
       Promise.all(commandPromises),
     ]);
 
+    const allDocConfigs = [...discoveredDocConfigs, ...configuredDocConfigs];
+    const docPromises = allDocConfigs.map((config) => Doc.load(this, config));
+    const docs = await Promise.all(docPromises);
+
     this.guides.push(...guides.filter((g): g is Guide => !!g));
-    this.docs.push(...fileDocs, ...urlDocs);
+    this.docs.push(...docs);
     this.commands.push(...commands);
   }
 
@@ -167,41 +160,42 @@ export class Package {
     dir: string,
     baseDir: string,
     docNamesFromConfig: Set<string>
-  ): Promise<Doc[]> {
+  ): Promise<ContentConfig[]> {
     if (!(await stat(dir).catch(() => false))) {
       return [];
     }
     const entries = await readdir(dir, {
       withFileTypes: true,
     });
-    const promises = entries.map(async (entry) => {
-      const fullPath = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        return this._getDocsFromDir(fullPath, baseDir, docNamesFromConfig);
+    const promises = entries.map(
+      async (entry): Promise<ContentConfig[] | ContentConfig | null> => {
+        const fullPath = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          return this._getDocsFromDir(fullPath, baseDir, docNamesFromConfig);
+        }
+        if (
+          entry.isFile() &&
+          (entry.name.endsWith(".md") || entry.name.endsWith(".prompt"))
+        ) {
+          const relativePath = relative(baseDir, fullPath);
+          const name = join(
+            parse(relativePath).dir,
+            parse(relativePath).name
+          ).replace(/\\/g, "/");
+
+          if (docNamesFromConfig.has(name)) {
+            return null; // Already configured, so skip discovery
+          }
+
+          return { name, path: resolve(baseDir, fullPath), description: "" };
+        }
+        return null;
       }
-      if (
-        entry.isFile() &&
-        (entry.name.endsWith(".md") || entry.name.endsWith(".prompt"))
-      ) {
-        const relativePath = relative(baseDir, fullPath);
-        const name = join(
-          parse(relativePath).dir,
-          parse(relativePath).name
-        ).replace(/\\/g, "/");
-        const config = this.config?.docs?.find((d) => d.name === name) || {
-          name,
-          description: "",
-          path: fullPath,
-        };
-        docNamesFromConfig.delete(name);
-        return Doc.load({ path: fullPath }, config);
-      }
-      return null;
-    });
+    );
 
     return (await Promise.all(promises))
       .flat()
-      .filter((p): p is Doc => p !== null);
+      .filter((p): p is ContentConfig => p !== null);
   }
 
   doc(name: string) {

@@ -1,8 +1,9 @@
 import { readFile, stat } from "fs/promises";
-import { basename } from "path";
+import { basename, join } from "path";
 import { Package } from "../../lib/package.js";
 import { Workspace } from "../../lib/workspace.js";
 import { countTokens, formatTokenCount } from "../../lib/render-utils.js";
+import { existsSync } from "fs";
 
 export async function inspectCommand(packageName: string | undefined) {
   let pkg: Package | undefined;
@@ -12,17 +13,20 @@ export async function inspectCommand(packageName: string | undefined) {
     pkg = workspace.packageMap[packageName];
   } else {
     try {
-      await stat(".guides");
-      let name = basename(process.cwd());
-      try {
-        const packageJsonContent = await readFile("package.json", "utf-8");
-        name = JSON.parse(packageJsonContent).name;
-      } catch {
-        // ignore, use directory name
+      console.log(process.cwd(), existsSync(join(process.cwd(), ".guides")));
+      if (existsSync(join(process.cwd(), ".guides"))) {
+        let name = basename(process.cwd());
+        try {
+          const packageJsonContent = await readFile("package.json", "utf-8");
+          name = JSON.parse(packageJsonContent).name;
+        } catch {
+          // ignore, use directory name
+        }
+        const workspace = await Workspace.load([process.cwd()]);
+        pkg = await Package.load(workspace, name, ".guides");
       }
-      const workspace = await Workspace.load([process.cwd()]);
-      pkg = await Package.load(workspace, name, ".guides");
     } catch (e) {
+      console.error(e);
       console.error(
         "Package name is required, or run from a directory with a .guides folder."
       );
