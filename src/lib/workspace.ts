@@ -1,5 +1,6 @@
 import { Package } from "./package.js";
 import { JavascriptLanguageAdapter } from "./languages/javascript.js";
+import { DartLanguageAdapter } from "./languages/dart.js";
 import type { LanguageAdapter, LanguageContext } from "./language-adapter.js";
 import { renderDetails, section } from "./render-utils.js";
 import type { Doc } from "./doc.js";
@@ -9,6 +10,7 @@ export class Workspace {
   readonly languages: LanguageContext[] = [];
   private languageAdapters: LanguageAdapter[] = [
     new JavascriptLanguageAdapter(),
+    new DartLanguageAdapter(),
   ];
   readonly packageMap: { [name: string]: Package } = {};
 
