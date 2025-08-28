@@ -6,6 +6,8 @@ To integrate with Dotguides, library authors need only include a `.guides` folde
 
 The Dotguides MCP server will automatically discover and serve documentation and configuration for any package that includes a `.guides` folder.
 
+Dotguides supports JavaScript (through a variety of package managers) and Dart (through pub). Support for additional package systems welcome!
+
 ## Dotguides MCP Server
 
 The Dotguides MCP server allows you to leverage the full guidance content of your project's dependencies with a single command. Add it to your project using:
