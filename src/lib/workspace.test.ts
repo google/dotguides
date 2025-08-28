@@ -49,7 +49,10 @@ describe("Workspace", () => {
     if (context) {
       expect(context.detected).toBe(true);
       expect(context.packageManager).toBe("pnpm");
-      expect(context.packages).toEqual(["package-a", "package-b"]);
+      expect(context.packages.map((p) => p.name).sort()).toEqual([
+        "package-a",
+        "package-b",
+      ]);
     } else {
       expect(context).toBeDefined();
     }

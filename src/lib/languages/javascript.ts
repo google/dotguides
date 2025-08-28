@@ -85,14 +85,32 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
     };
 
     for (const name in dependencies) {
-      const packagePath = join("node_modules", name);
+      const packagePath = join(directory, "node_modules", name);
       const guidesDir = join(packagePath, ".guides");
       const contribPackagePath = join(
+        directory,
         "node_modules",
         `@dotguides-contrib/${normalize(name)}`
       );
-      if (await existsAny(directory, guidesDir, contribPackagePath)) {
-        context.packages.push(name);
+      if (await existsAny(null, guidesDir, contribPackagePath)) {
+        const dependencyVersion = dependencies[name];
+        let packageVersion = dependencyVersion;
+
+        const packageJsonContent = await readAny(packagePath, "package.json");
+        if (packageJsonContent) {
+          try {
+            const packageJson = JSON.parse(packageJsonContent.content);
+            packageVersion = packageJson.version;
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        context.packages.push({
+          name,
+          dependencyVersion,
+          packageVersion,
+        });
       }
     }
 

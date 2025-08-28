@@ -13,7 +13,7 @@ const normalize = (pkg: string) =>
 export class DartLanguageAdapter implements LanguageAdapter {
   async discover(directory: string): Promise<LanguageContext> {
     const pubspecPath = await existsAny(directory, "pubspec.yaml");
-    
+
     if (!pubspecPath) {
       return {
         detected: false,
@@ -32,16 +32,17 @@ export class DartLanguageAdapter implements LanguageAdapter {
 
     // Check pubspec.yaml for project metadata (Flutter detection, SDK version)
     const pubspecContent = await readAny(directory, "pubspec.yaml");
+    let pubspec: any;
     if (pubspecContent) {
       try {
-        const pubspec = load(pubspecContent.content) as any;
-        
+        pubspec = load(pubspecContent.content) as any;
+
         // Check for Flutter project
         if (pubspec?.dependencies?.flutter) {
           context.name = "flutter";
           context.runtime = "flutter";
         }
-        
+
         // Get SDK version constraint
         if (pubspec?.environment?.sdk) {
           context.runtimeVersion = pubspec.environment.sdk;
@@ -51,11 +52,31 @@ export class DartLanguageAdapter implements LanguageAdapter {
       }
     }
 
+    const pubspecLockContent = await readAny(directory, "pubspec.lock");
+    let pubspecLock: any;
+    if (pubspecLockContent) {
+      try {
+        pubspecLock = load(pubspecLockContent.content);
+      } catch (e) {
+        // ignore
+      }
+    }
+
     // Use .dart_tool/package_config.json for canonical package list and locations
     const packages = await this._parsePackageConfig(directory);
     for (const pkg of packages) {
       if (await existsAny(null, ...pkg.guidesDirectories)) {
-        context.packages.push(pkg.name);
+        const dependencyVersion =
+          pubspec?.dependencies?.[pkg.name] ||
+          pubspec?.dev_dependencies?.[pkg.name] ||
+          "any";
+        const packageVersion =
+          pubspecLock?.packages?.[pkg.name]?.version || "unknown";
+        context.packages.push({
+          name: pkg.name,
+          dependencyVersion,
+          packageVersion,
+        });
       }
     }
 
@@ -68,16 +89,21 @@ export class DartLanguageAdapter implements LanguageAdapter {
     name: string
   ): Promise<Package> {
     // Check if package_config.json exists first
-    const packageConfigContent = await readAny(directory, ".dart_tool/package_config.json");
+    const packageConfigContent = await readAny(
+      directory,
+      ".dart_tool/package_config.json"
+    );
     if (!packageConfigContent) {
-      throw new Error(`Could not find .dart_tool/package_config.json for package ${name}`);
+      throw new Error(
+        `Could not find .dart_tool/package_config.json for package ${name}`
+      );
     }
 
     // Get package location from .dart_tool/package_config.json
     const packages = await this._parsePackageConfig(directory);
-    
+
     // Find the specific package
-    const pkg = packages.find(p => p.name === name);
+    const pkg = packages.find((p) => p.name === name);
     if (!pkg) {
       throw new Error(`Package ${name} not found in package_config.json`);
     }
@@ -95,7 +121,7 @@ export class DartLanguageAdapter implements LanguageAdapter {
   async discoverContrib(packages: string[]): Promise<string[]> {
     const discovered: string[] = [];
     const contribPath = process.env.DOTGUIDES_CONTRIB;
-    
+
     if (contribPath) {
       for (const pkg of packages) {
         const contribDir = join(contribPath, "dart", normalize(pkg));
@@ -113,7 +139,9 @@ export class DartLanguageAdapter implements LanguageAdapter {
 
     // Check pub.dev for contrib packages
     const promises = packages.map(async (pkg) => {
-      const url = `https://pub.dev/packages/dotguides_contrib_${normalize(pkg)}`;
+      const url = `https://pub.dev/packages/dotguides_contrib_${normalize(
+        pkg
+      )}`;
       try {
         const res = await cachedFetch(url, { method: "HEAD" });
         if (res.ok) {
@@ -128,12 +156,17 @@ export class DartLanguageAdapter implements LanguageAdapter {
     return (await Promise.all(promises)).filter((p): p is string => p !== null);
   }
 
-  private async _parsePackageConfig(directory: string): Promise<Array<{
-    name: string,
-    rootPath: string,
-    guidesDirectories: string[]
-  }>> {
-    const packageConfigContent = await readAny(directory, ".dart_tool/package_config.json");
+  private async _parsePackageConfig(directory: string): Promise<
+    Array<{
+      name: string;
+      rootPath: string;
+      guidesDirectories: string[];
+    }>
+  > {
+    const packageConfigContent = await readAny(
+      directory,
+      ".dart_tool/package_config.json"
+    );
     if (!packageConfigContent) {
       return [];
     }
@@ -141,31 +174,33 @@ export class DartLanguageAdapter implements LanguageAdapter {
     try {
       const packageConfig = JSON.parse(packageConfigContent.content);
       const packages = packageConfig.packages || [];
-      
+
       return packages
         .filter((pkg: any) => pkg.name && pkg.rootUri)
         .map((pkg: any) => {
           // Convert file:// URI to local path
-          const rootPath = pkg.rootUri.startsWith('file://') 
+          const rootPath = pkg.rootUri.startsWith("file://")
             ? pkg.rootUri.substring(7) // Remove 'file://' prefix
             : pkg.rootUri;
-          
+
           const guidesDir = join(rootPath, ".guides");
-          
+
           // Also check for contrib packages (if this is a hosted package)
           const contribPackageName = `dotguides_contrib_${normalize(pkg.name)}`;
-          const contribRootPath = rootPath.replace(`/${pkg.name}-`, `/${contribPackageName}-`);
+          const contribRootPath = rootPath.replace(
+            `/${pkg.name}-`,
+            `/${contribPackageName}-`
+          );
           const contribGuidesDir = join(contribRootPath, ".guides");
-          
+
           return {
             name: pkg.name,
             rootPath,
-            guidesDirectories: [guidesDir, contribGuidesDir]
+            guidesDirectories: [guidesDir, contribGuidesDir],
           };
         });
     } catch (e) {
       return [];
     }
   }
-
 }

@@ -88,6 +88,13 @@ dependencies:
 dev_dependencies:
   test: ^1.21.0
 `,
+          "/test/workspace/pubspec.lock": `
+packages:
+  package_a:
+    version: "1.0.0"
+  test:
+    version: "1.21.0"
+`,
           "/test/workspace/.dart_tool/package_config.json": `{
   "configVersion": 2,
   "packages": [
@@ -105,15 +112,28 @@ dev_dependencies:
     }
   ]
 }`,
-          "/home/.pub-cache/hosted/pub.dev/package_a-1.0.0/.guides/config.json": "{}",
-          "/home/.pub-cache/hosted/pub.dev/dotguides_contrib_test-1.21.0/.guides/config.json": "{}",
+          "/home/.pub-cache/hosted/pub.dev/package_a-1.0.0/.guides/config.json":
+            "{}",
+          "/home/.pub-cache/hosted/pub.dev/dotguides_contrib_test-1.21.0/.guides/config.json":
+            "{}",
         },
         expected: {
           detected: true,
           name: "dart",
           packageManager: "pub",
           runtime: "dart",
-          packages: ["package_a", "test"],
+          packages: [
+            {
+              name: "package_a",
+              dependencyVersion: "^1.0.0",
+              packageVersion: "1.0.0",
+            },
+            {
+              name: "test",
+              dependencyVersion: "^1.21.0",
+              packageVersion: "1.21.0",
+            },
+          ],
         },
       },
       {
@@ -123,6 +143,11 @@ dev_dependencies:
 name: my_dart_app
 dependencies:
   some_package: ^1.0.0
+`,
+          "/test/workspace/pubspec.lock": `
+packages:
+  some_package:
+    version: "1.0.0"
 `,
           "/test/workspace/.dart_tool/package_config.json": `{
   "configVersion": 2,
@@ -135,14 +160,21 @@ dependencies:
     }
   ]
 }`,
-          "/home/.pub-cache/hosted/pub.dev/dotguides_contrib_some_package-1.0.0/.guides/config.json": "{}",
+          "/home/.pub-cache/hosted/pub.dev/dotguides_contrib_some_package-1.0.0/.guides/config.json":
+            "{}",
         },
         expected: {
           detected: true,
           name: "dart",
           packageManager: "pub",
           runtime: "dart",
-          packages: ["some_package"],
+          packages: [
+            {
+              name: "some_package",
+              dependencyVersion: "^1.0.0",
+              packageVersion: "1.0.0",
+            },
+          ],
         },
       },
       {
@@ -153,6 +185,11 @@ name: my_dart_app
 dependencies:
   loudify:
     path: /Users/sethladd/Code/loudify/loudify
+`,
+          "/test/workspace/pubspec.lock": `
+packages:
+  loudify:
+    version: "1.0.0"
 `,
           "/test/workspace/.dart_tool/package_config.json": `{
   "configVersion": 2,
@@ -172,7 +209,15 @@ dependencies:
           name: "dart",
           packageManager: "pub",
           runtime: "dart",
-          packages: ["loudify"],
+          packages: [
+            {
+              name: "loudify",
+              dependencyVersion: {
+                path: "/Users/sethladd/Code/loudify/loudify",
+              },
+              packageVersion: "1.0.0",
+            },
+          ],
         },
       },
       {
@@ -196,6 +241,13 @@ dev_dependencies:
 
 dependency_overrides:
   meta: ^1.9.1
+`,
+          "/test/workspace/pubspec.lock": `
+packages:
+  http:
+    version: "0.13.5"
+  test:
+    version: "1.21.0"
 `,
           "/test/workspace/.dart_tool/package_config.json": `{
   "configVersion": 2,
@@ -238,8 +290,10 @@ dependency_overrides:
     }
   ]
 }`,
-          "/home/.pub-cache/hosted/pub.dev/http-0.13.5/.guides/config.json": "{}",
-          "/home/.pub-cache/hosted/pub.dev/dotguides_contrib_test-1.21.0/.guides/config.json": "{}",
+          "/home/.pub-cache/hosted/pub.dev/http-0.13.5/.guides/config.json":
+            "{}",
+          "/home/.pub-cache/hosted/pub.dev/dotguides_contrib_test-1.21.0/.guides/config.json":
+            "{}",
         },
         expected: {
           detected: true,
@@ -247,22 +301,33 @@ dependency_overrides:
           packageManager: "pub",
           runtime: "dart",
           runtimeVersion: ">=2.17.0 <4.0.0",
-          packages: ["http", "test"],
+          packages: [
+            {
+              name: "http",
+              dependencyVersion: "^0.13.5",
+              packageVersion: "0.13.5",
+            },
+            {
+              name: "test",
+              dependencyVersion: "^1.21.0",
+              packageVersion: "1.21.0",
+            },
+          ],
         },
       },
     ];
 
     it.each(tests)("$desc", async ({ files, expected }) => {
       vol.fromJSON(files);
-      
+
       // Set HOME environment variable for tests that use pub cache
       const originalHome = process.env.HOME;
       process.env.HOME = "/home";
-      
+
       try {
         const adapter = new DartLanguageAdapter();
         const context = await adapter.discover("/test/workspace");
-        
+
         expect(context.detected).toBe(expected.detected);
         expect(context.name).toBe(expected.name);
         expect(context.packageManager).toBe(expected.packageManager);
@@ -270,7 +335,15 @@ dependency_overrides:
         if (expected.runtimeVersion) {
           expect(context.runtimeVersion).toBe(expected.runtimeVersion);
         }
-        expect(context.packages.sort()).toEqual(expected.packages.sort());
+        const sortedPackages = context.packages.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+        const sortedExpectedPackages = expected.packages.sort((a, b) => {
+          const aName = typeof a === "string" ? a : a.name;
+          const bName = typeof b === "string" ? b : b.name;
+          return aName.localeCompare(bName);
+        });
+        expect(sortedPackages).toEqual(sortedExpectedPackages);
       } finally {
         // Restore original HOME environment variable
         if (originalHome !== undefined) {
@@ -302,7 +375,7 @@ dependency_overrides:
       const adapter = new DartLanguageAdapter();
       const workspace = {
         directories: ["/test/workspace"],
-        languages: [{ packages: ["http"] }],
+        languages: [{ packages: [{ name: "http" }] }],
       } as unknown as Workspace;
       const pkg = await adapter.loadPackage(
         workspace,
@@ -325,13 +398,14 @@ dependency_overrides:
     }
   ]
 }`,
-        "/home/.pub-cache/hosted/pub.dev/dotguides_contrib_dio-5.3.2/.guides/config.json": "{}",
+        "/home/.pub-cache/hosted/pub.dev/dotguides_contrib_dio-5.3.2/.guides/config.json":
+          "{}",
       });
 
       const adapter = new DartLanguageAdapter();
       const workspace = {
         directories: ["/test/workspace"],
-        languages: [{ packages: ["dio"] }],
+        languages: [{ packages: [{ name: "dio" }] }],
       } as unknown as Workspace;
       const pkg = await adapter.loadPackage(
         workspace,
@@ -347,14 +421,14 @@ dependency_overrides:
       const adapter = new DartLanguageAdapter();
       const workspace = {
         directories: ["/test/workspace"],
-        languages: [{ packages: ["nonexistent"] }],
+        languages: [{ packages: [{ name: "nonexistent" }] }],
       } as unknown as Workspace;
-      
-      await expect(adapter.loadPackage(
-        workspace,
-        "/test/workspace",
-        "nonexistent"
-      )).rejects.toThrow("Could not find .dart_tool/package_config.json for package nonexistent");
+
+      await expect(
+        adapter.loadPackage(workspace, "/test/workspace", "nonexistent")
+      ).rejects.toThrow(
+        "Could not find .dart_tool/package_config.json for package nonexistent"
+      );
     });
 
     it("should load a local path package", async () => {
@@ -376,7 +450,7 @@ dependency_overrides:
       const adapter = new DartLanguageAdapter();
       const workspace = {
         directories: ["/test/workspace"],
-        languages: [{ packages: ["loudify"] }],
+        languages: [{ packages: [{ name: "loudify" }] }],
       } as unknown as Workspace;
       const pkg = await adapter.loadPackage(
         workspace,
@@ -404,17 +478,13 @@ dependency_overrides:
       const adapter = new DartLanguageAdapter();
       const workspace = {
         directories: ["/test/workspace"],
-        languages: [{ packages: ["nonexistent"] }],
+        languages: [{ packages: [{ name: "nonexistent" }] }],
       } as unknown as Workspace;
-      
-      await expect(adapter.loadPackage(
-        workspace,
-        "/test/workspace",
-        "nonexistent"
-      )).rejects.toThrow("Package nonexistent not found in package_config.json");
+
+      await expect(
+        adapter.loadPackage(workspace, "/test/workspace", "nonexistent")
+      ).rejects.toThrow("Package nonexistent not found in package_config.json");
     });
-
-
   });
 
   describe("discoverContrib", () => {
@@ -441,7 +511,10 @@ dependency_overrides:
             "/contrib/dart/package_a/index.dart": "",
             "/contrib/dart/package_c/index.dart": "",
           },
-          expected: ["file:/contrib/dart/package_a", "file:/contrib/dart/package_c"],
+          expected: [
+            "file:/contrib/dart/package_a",
+            "file:/contrib/dart/package_c",
+          ],
         },
       ];
 
@@ -550,7 +623,7 @@ dev_dependencies:
 
       const adapter = new DartLanguageAdapter();
       const context = await adapter.discover("/test/workspace");
-      
+
       // The adapter should parse the package config correctly
       expect(context.detected).toBe(true);
       expect(context.runtimeVersion).toBe(">=2.17.0 <4.0.0");

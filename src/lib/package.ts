@@ -56,25 +56,14 @@ export class Package {
   }
 
   private async _load(): Promise<void> {
-    const packageJsonPath = join(this.guidesDir, "..", "package.json");
-    const packageJsonContent = await readAny(packageJsonPath);
-    if (packageJsonContent) {
-      const packageJson = JSON.parse(packageJsonContent.content);
-      this.packageVersion = packageJson.version;
-    }
-
-    for (const dir of this.workspace.directories) {
-      const workspacePackageJson = await readAny(join(dir, "package.json"));
-      if (workspacePackageJson) {
-        const manifest = JSON.parse(workspacePackageJson.content);
-        const allDeps = {
-          ...manifest.dependencies,
-          ...manifest.devDependencies,
-        };
-        if (allDeps[this.name]) {
-          this.dependencyVersion = allDeps[this.name];
-          break;
-        }
+    const language = this.workspace.languages.find((l) =>
+      l.packages.find((p) => p.name === this.name)
+    );
+    if (language) {
+      const packageInfo = language.packages.find((p) => p.name === this.name);
+      if (packageInfo) {
+        this.packageVersion = packageInfo.packageVersion;
+        this.dependencyVersion = packageInfo.dependencyVersion;
       }
     }
     const guidesJson = await readAny(this.guidesDir, "config.json");
@@ -208,7 +197,7 @@ export class Package {
 
   renderContext(hints?: RenderContext["hints"]): RenderContext {
     const language = this.workspace.languages.find((l) =>
-      l.packages.includes(this.name)
+      l.packages.find((p) => p.name === this.name)
     );
     if (!language) {
       throw new Error(

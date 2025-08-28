@@ -16,7 +16,7 @@ export interface ContentFile {
   readonly source: ContentFileSource;
   readonly frontmatter: Record<string, any>;
   readonly pkg: Package;
-  render(context: RenderContext): Promise<ContentBlock[]>;
+  render(context?: RenderContext): Promise<ContentBlock[]>;
 }
 
 export async function loadContentFileText(

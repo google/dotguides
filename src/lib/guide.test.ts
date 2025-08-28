@@ -26,7 +26,7 @@ describe("Guide", () => {
       path: filePath,
     });
     expect(guide).toBeInstanceOf(Guide);
-    const content = await guide.content;
+    const content = await guide.render();
     expect(content[0]?.type).toBe("text");
     if (content[0]?.type === "text") {
       expect(content[0]?.text).toBe(fileContent);

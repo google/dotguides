@@ -31,7 +31,17 @@ describe("Package", () => {
 
     const workspace = {
       directories: ["/test"],
-      languages: [{ packages: ["test-package"] }],
+      languages: [
+        {
+          packages: [
+            {
+              name: "test-package",
+              packageVersion: "1.0.0",
+              dependencyVersion: "1.0.0",
+            },
+          ],
+        },
+      ],
     } as unknown as Workspace;
     const pkg = await Package.load(
       workspace,
@@ -53,7 +63,17 @@ describe("Package", () => {
 
     const workspace = {
       directories: ["/test"],
-      languages: [{ packages: ["test-package"] }],
+      languages: [
+        {
+          packages: [
+            {
+              name: "test-package",
+              packageVersion: "1.0.0",
+              dependencyVersion: "1.0.0",
+            },
+          ],
+        },
+      ],
     } as unknown as Workspace;
     const pkg = await Package.load(
       workspace,
@@ -84,7 +104,17 @@ describe("Package", () => {
 
     const workspace = {
       directories: ["/test"],
-      languages: [{ packages: ["test-package"] }],
+      languages: [
+        {
+          packages: [
+            {
+              name: "test-package",
+              packageVersion: "1.0.0",
+              dependencyVersion: "1.0.0",
+            },
+          ],
+        },
+      ],
     } as unknown as Workspace;
     const pkg = await Package.load(
       workspace,

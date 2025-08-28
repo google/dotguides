@@ -1,6 +1,20 @@
 import type { Package } from "./package.js";
 import type { Workspace } from "./workspace.js";
 
+export interface PackageInfo {
+  name: string;
+  /** The specific installed version of the package in the current workspace. */
+  packageVersion: string;
+  /** The semver string provided by the user in the dependency file. */
+  dependencyVersion: string;
+  /** True if this is a development dependency and not a production dependency. */
+  development?: boolean;
+  /** True if this is an optional dependency. */
+  optional?: boolean;
+  /** True if the package has guides, false if not. */
+  guides: boolean;
+}
+
 export interface LanguageContext {
   /** This is true if use of the language is detected in a specific directory (e.g. by looking for relevant dependency files). */
   detected: boolean;
@@ -13,7 +27,7 @@ export interface LanguageContext {
   /** The version of the runtime (e.g. '22.14.7' for Node.js or '1.24.2' for go). Prefer config-based detection, fallback to shell command version detection. */
   runtimeVersion?: string;
   /** The names of packages discovered for this language that have guides */
-  packages: string[];
+  packages: PackageInfo[];
 }
 
 export interface LanguageAdapter {

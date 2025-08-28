@@ -5,6 +5,7 @@ import type { fs } from "memfs";
 import { cachedFetch } from "./cached-fetch.js";
 import type { RenderContext } from "./types.js";
 import type { Package } from "./package.js";
+import { Dotprompt } from "dotprompt";
 
 vi.mock("fs/promises", async () => {
   const memfs: { fs: typeof fs } = await vi.importActual("memfs");
@@ -17,6 +18,7 @@ const mockedCachedFetch = vi.mocked(cachedFetch);
 
 const mockPackage = {
   name: "test-pkg",
+  dotprompt: new Dotprompt(),
 } as Package;
 
 const renderContext: RenderContext = {

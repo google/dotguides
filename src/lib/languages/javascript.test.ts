@@ -68,9 +68,19 @@ describe("JavascriptLanguageAdapter", () => {
             "@scope/package-c": "1.0.0",
           },
         }),
+        "/test/workspace/node_modules/package-a/package.json": JSON.stringify({
+          version: "1.0.0",
+        }),
         "/test/workspace/node_modules/package-a/.guides/config.json": "{}",
+        "/test/workspace/node_modules/package-b/package.json": JSON.stringify({
+          version: "1.2.0",
+        }),
         "/test/workspace/node_modules/@dotguides-contrib/package-b/config.json":
           "{}",
+        "/test/workspace/node_modules/@scope/package-c/package.json":
+          JSON.stringify({
+            version: "1.0.0",
+          }),
         "/test/workspace/node_modules/@dotguides-contrib/scope__package-c/config.json":
           "{}",
       });
@@ -79,10 +89,24 @@ describe("JavascriptLanguageAdapter", () => {
       const context = await adapter.discover("/test/workspace");
 
       expect(context.packages).toHaveLength(3);
-      expect(context.packages.sort()).toEqual([
-        "@scope/package-c",
-        "package-a",
-        "package-b",
+      expect(
+        context.packages.sort((a, b) => a.name.localeCompare(b.name))
+      ).toEqual([
+        {
+          name: "@scope/package-c",
+          dependencyVersion: "1.0.0",
+          packageVersion: "1.0.0",
+        },
+        {
+          name: "package-a",
+          dependencyVersion: "1.0.0",
+          packageVersion: "1.0.0",
+        },
+        {
+          name: "package-b",
+          dependencyVersion: "1.0.0",
+          packageVersion: "1.2.0",
+        },
       ]);
     });
   });
@@ -96,7 +120,7 @@ describe("JavascriptLanguageAdapter", () => {
       const adapter = new JavascriptLanguageAdapter();
       const workspace = {
         directories: ["/test/workspace"],
-        languages: [{ packages: ["package-a"] }],
+        languages: [{ packages: [{ name: "package-a" }] }],
       } as unknown as Workspace;
       const pkg = await adapter.loadPackage(
         workspace,
@@ -115,7 +139,7 @@ describe("JavascriptLanguageAdapter", () => {
       const adapter = new JavascriptLanguageAdapter();
       const workspace = {
         directories: ["/test/workspace"],
-        languages: [{ packages: ["package-b"] }],
+        languages: [{ packages: [{ name: "package-b" }] }],
       } as unknown as Workspace;
       const pkg = await adapter.loadPackage(
         workspace,

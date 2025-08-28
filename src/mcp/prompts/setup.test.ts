@@ -6,16 +6,22 @@ import { InvalidRequestError } from "@modelcontextprotocol/sdk/server/auth/error
 
 describe("setup prompt", () => {
   it("should return setup instructions for a package", async () => {
+    const mockRenderContext = { mock: "context" };
     const mockGuide = {
       config: { name: "setup" },
-      content: Promise.resolve([{ type: "text", text: "Setup instructions" }]),
+      render: vi
+        .fn()
+        .mockResolvedValue([{ type: "text", text: "Setup instructions" }]),
     } as unknown as Guide;
+
+    const mockPackage = {
+      guides: [mockGuide],
+      renderContext: vi.fn().mockReturnValue(mockRenderContext),
+    };
 
     const mockWorkspace = {
       packageMap: {
-        "test-pkg": {
-          guides: [mockGuide],
-        },
+        "test-pkg": mockPackage,
       },
     } as unknown as Workspace;
 
@@ -26,6 +32,7 @@ describe("setup prompt", () => {
 
     expect(result.messages).toHaveLength(1);
     expect(result.messages[0]!.content.text).toBe("Setup instructions");
+    expect(mockGuide.render).toHaveBeenCalledWith(mockRenderContext);
   });
 
   it("should throw an error if package is not provided", async () => {

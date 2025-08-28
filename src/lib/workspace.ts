@@ -28,8 +28,12 @@ export class Workspace {
         const context = await adapter.discover(directory);
         if (context.detected) {
           this.languages.push(context);
-          for (const packageName of context.packages) {
-            const pkg = await adapter.loadPackage(this, directory, packageName);
+          for (const packageInfo of context.packages) {
+            const pkg = await adapter.loadPackage(
+              this,
+              directory,
+              packageInfo.name
+            );
             this.packageMap[pkg.name] = pkg;
           }
         }
@@ -60,7 +64,7 @@ export class Workspace {
 
         let usageContent: string | undefined;
         if (usageGuide) {
-          const blocks = await usageGuide.content;
+          const blocks = await usageGuide.render();
           const firstBlock = blocks[0];
           if (firstBlock?.type === "text") {
             usageContent = firstBlock.text;
@@ -69,7 +73,7 @@ export class Workspace {
 
         let styleContent: string | undefined;
         if (styleGuide) {
-          const blocks = await styleGuide.content;
+          const blocks = await styleGuide.render();
           const firstBlock = blocks[0];
           if (firstBlock?.type === "text") {
             styleContent = firstBlock.text;

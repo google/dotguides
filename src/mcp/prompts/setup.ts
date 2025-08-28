@@ -21,7 +21,7 @@ export const setup = prompt(
         `Setup guide not found for package '${args.package}'.`
       );
     }
-    const content = await setupGuide.content;
+    const content = await setupGuide.render(pkg.renderContext());
     return {
       messages: [
         {

@@ -20,24 +20,11 @@ export class Guide {
     return this.contentFile.source;
   }
 
-  get content(): Promise<ContentBlock[]> {
-    return this.render({
-      workspaceDir: "",
-      packageVersion: "",
-      dependencyVersion: "",
-      language: {
-        detected: false,
-        name: "",
-        packages: [],
-      },
-    });
-  }
-
   get frontmatter() {
     return this.contentFile.frontmatter;
   }
 
-  render(context: RenderContext): Promise<ContentBlock[]> {
+  render(context?: RenderContext): Promise<ContentBlock[]> {
     return this.contentFile.render(context);
   }
 }

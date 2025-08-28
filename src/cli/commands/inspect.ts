@@ -46,7 +46,7 @@ export async function inspectCommand(packageName: string | undefined) {
   if (pkg.guides.length > 0) {
     console.log("  Guides:");
     for (const guide of pkg.guides) {
-      const content = await guide.content;
+      const content = await guide.render();
       const tokens = countTokens(content);
       console.log(
         `    - ${guide.config.name} (~${formatTokenCount(tokens)} tokens)`
