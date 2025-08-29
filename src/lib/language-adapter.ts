@@ -39,3 +39,7 @@ export interface LanguageAdapter {
   ): Promise<Package>;
   discoverContrib?(packages: string[]): Promise<string[]>;
 }
+
+export const packagesWithGuides = (packages: PackageInfo[]): PackageInfo[] => {
+  return packages.filter((p) => p.guides);
+};

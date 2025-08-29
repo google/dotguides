@@ -1,7 +1,11 @@
 import { Package } from "./package.js";
 import { JavascriptLanguageAdapter } from "./languages/javascript.js";
 import { DartLanguageAdapter } from "./languages/dart.js";
-import type { LanguageAdapter, LanguageContext } from "./language-adapter.js";
+import {
+  type LanguageAdapter,
+  type LanguageContext,
+  packagesWithGuides,
+} from "./language-adapter.js";
 import { renderDetails, section } from "./render-utils.js";
 import type { Doc } from "./doc.js";
 import { nullable } from "zod";
@@ -28,7 +32,7 @@ export class Workspace {
         const context = await adapter.discover(directory);
         if (context.detected) {
           this.languages.push(context);
-          for (const packageInfo of context.packages) {
+          for (const packageInfo of packagesWithGuides(context.packages)) {
             const pkg = await adapter.loadPackage(
               this,
               directory,

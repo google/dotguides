@@ -65,19 +65,23 @@ export class DartLanguageAdapter implements LanguageAdapter {
     // Use .dart_tool/package_config.json for canonical package list and locations
     const packages = await this._parsePackageConfig(directory);
     for (const pkg of packages) {
-      if (await existsAny(null, ...pkg.guidesDirectories)) {
-        const dependencyVersion =
-          pubspec?.dependencies?.[pkg.name] ||
-          pubspec?.dev_dependencies?.[pkg.name] ||
-          "any";
-        const packageVersion =
-          pubspecLock?.packages?.[pkg.name]?.version || "unknown";
-        context.packages.push({
-          name: pkg.name,
-          dependencyVersion,
-          packageVersion,
-        });
-      }
+      const hasGuides = !!(await existsAny(null, ...pkg.guidesDirectories));
+      const dependencyVersion =
+        pubspec?.dependencies?.[pkg.name] ||
+        pubspec?.dev_dependencies?.[pkg.name] ||
+        "any";
+      const packageVersion =
+        pubspecLock?.packages?.[pkg.name]?.version || "unknown";
+      const isDevDependency = !!pubspec?.dev_dependencies?.[pkg.name];
+
+      context.packages.push({
+        name: pkg.name,
+        dependencyVersion,
+        packageVersion,
+        guides: hasGuides,
+        development: isDevDependency,
+        optional: false,
+      });
     }
 
     return context;

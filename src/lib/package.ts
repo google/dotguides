@@ -13,6 +13,7 @@ import {
 import type { Workspace } from "./workspace.js";
 import { Dotprompt } from "dotprompt";
 import { existsSync, readFileSync } from "fs";
+import { packageHelpers } from "./prompt-helpers.js";
 
 export class Package {
   readonly guides: Guide[] = [];
@@ -41,7 +42,7 @@ export class Package {
           return null;
         }
       },
-      helpers: {},
+      helpers: packageHelpers(this),
     });
   }
 

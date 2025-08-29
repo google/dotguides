@@ -79,12 +79,13 @@ dependencies:
         },
       },
       {
-        desc: "should discover packages with guides using package_config.json",
+        desc: "should discover packages and their properties correctly",
         files: {
           "/test/workspace/pubspec.yaml": `
 name: my_dart_app
 dependencies:
   package_a: ^1.0.0
+  package_b: ^2.0.0
 dev_dependencies:
   test: ^1.21.0
 `,
@@ -92,6 +93,8 @@ dev_dependencies:
 packages:
   package_a:
     version: "1.0.0"
+  package_b:
+    version: "2.0.0"
   test:
     version: "1.21.0"
 `,
@@ -100,22 +103,23 @@ packages:
   "packages": [
     {
       "name": "package_a",
-      "rootUri": "file:///home/.pub-cache/hosted/pub.dev/package_a-1.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "rootUri": "file:///home/.pub-cache/hosted/pub.dev/package_a-1.0.0"
+    },
+    {
+      "name": "package_b",
+      "rootUri": "file:///home/.pub-cache/hosted/pub.dev/package_b-2.0.0"
     },
     {
       "name": "test",
-      "rootUri": "file:///home/.pub-cache/hosted/pub.dev/test-1.21.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "rootUri": "file:///home/.pub-cache/hosted/pub.dev/test-1.21.0"
     }
   ]
 }`,
           "/home/.pub-cache/hosted/pub.dev/package_a-1.0.0/.guides/config.json":
-            "{}",
+            "{}", // Has guides
+          // package_b does not have guides
           "/home/.pub-cache/hosted/pub.dev/dotguides_contrib_test-1.21.0/.guides/config.json":
-            "{}",
+            "{}", // Has contrib guides
         },
         expected: {
           detected: true,
@@ -127,11 +131,25 @@ packages:
               name: "package_a",
               dependencyVersion: "^1.0.0",
               packageVersion: "1.0.0",
+              guides: true,
+              development: false,
+              optional: false,
+            },
+            {
+              name: "package_b",
+              dependencyVersion: "^2.0.0",
+              packageVersion: "2.0.0",
+              guides: false,
+              development: false,
+              optional: false,
             },
             {
               name: "test",
               dependencyVersion: "^1.21.0",
               packageVersion: "1.21.0",
+              guides: true,
+              development: true,
+              optional: false,
             },
           ],
         },
@@ -173,6 +191,9 @@ packages:
               name: "some_package",
               dependencyVersion: "^1.0.0",
               packageVersion: "1.0.0",
+              guides: true,
+              development: false,
+              optional: false,
             },
           ],
         },
@@ -216,6 +237,9 @@ packages:
                 path: "/Users/sethladd/Code/loudify/loudify",
               },
               packageVersion: "1.0.0",
+              guides: true,
+              development: false,
+              optional: false,
             },
           ],
         },
@@ -303,14 +327,52 @@ packages:
           runtimeVersion: ">=2.17.0 <4.0.0",
           packages: [
             {
+              name: "build_runner",
+              dependencyVersion: "^2.4.6",
+              packageVersion: "unknown",
+              guides: false,
+              development: true,
+              optional: false,
+            },
+            {
               name: "http",
               dependencyVersion: "^0.13.5",
               packageVersion: "0.13.5",
+              guides: true,
+              development: false,
+              optional: false,
+            },
+            {
+              name: "json_annotation",
+              dependencyVersion: "^4.8.1",
+              packageVersion: "unknown",
+              guides: false,
+              development: false,
+              optional: false,
+            },
+            {
+              name: "json_serializable",
+              dependencyVersion: "^6.7.1",
+              packageVersion: "unknown",
+              guides: false,
+              development: true,
+              optional: false,
+            },
+            {
+              name: "meta",
+              dependencyVersion: "any",
+              packageVersion: "unknown",
+              guides: false,
+              development: false,
+              optional: false,
             },
             {
               name: "test",
               dependencyVersion: "^1.21.0",
               packageVersion: "1.21.0",
+              guides: true,
+              development: true,
+              optional: false,
             },
           ],
         },
@@ -338,11 +400,9 @@ packages:
         const sortedPackages = context.packages.sort((a, b) =>
           a.name.localeCompare(b.name)
         );
-        const sortedExpectedPackages = expected.packages.sort((a, b) => {
-          const aName = typeof a === "string" ? a : a.name;
-          const bName = typeof b === "string" ? b : b.name;
-          return aName.localeCompare(bName);
-        });
+        const sortedExpectedPackages = expected.packages.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
         expect(sortedPackages).toEqual(sortedExpectedPackages);
       } finally {
         // Restore original HOME environment variable
@@ -627,8 +687,9 @@ dev_dependencies:
       // The adapter should parse the package config correctly
       expect(context.detected).toBe(true);
       expect(context.runtimeVersion).toBe(">=2.17.0 <4.0.0");
-      // Since no actual .guides directories exist in the test, packages array should be empty
-      expect(context.packages).toEqual([]);
+      // Since we now discover all packages, this should not be empty
+      expect(context.packages).not.toEqual([]);
+      expect(context.packages.length).toBe(4);
     });
   });
 });

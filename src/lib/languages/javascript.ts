@@ -79,12 +79,17 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
       return context;
     }
     const packageJson = JSON.parse(packageJsonContent.content);
-    const dependencies = {
-      ...packageJson.dependencies,
-      ...packageJson.devDependencies,
+    const dependencies = packageJson.dependencies || {};
+    const devDependencies = packageJson.devDependencies || {};
+    const optionalDependencies = packageJson.optionalDependencies || {};
+
+    const allDeps = {
+      ...dependencies,
+      ...devDependencies,
+      ...optionalDependencies,
     };
 
-    for (const name in dependencies) {
+    for (const name in allDeps) {
       const packagePath = join(directory, "node_modules", name);
       const guidesDir = join(packagePath, ".guides");
       const contribPackagePath = join(
@@ -92,26 +97,38 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
         "node_modules",
         `@dotguides-contrib/${normalize(name)}`
       );
-      if (await existsAny(null, guidesDir, contribPackagePath)) {
-        const dependencyVersion = dependencies[name];
-        let packageVersion = dependencyVersion;
+      const hasGuides = !!(await existsAny(
+        null,
+        guidesDir,
+        contribPackagePath
+      ));
 
-        const packageJsonContent = await readAny(packagePath, "package.json");
-        if (packageJsonContent) {
-          try {
-            const packageJson = JSON.parse(packageJsonContent.content);
-            packageVersion = packageJson.version;
-          } catch (e) {
-            // ignore
-          }
+      const dependencyVersion = allDeps[name];
+      let packageVersion = dependencyVersion;
+
+      const installedPackageJsonContent = await readAny(
+        packagePath,
+        "package.json"
+      );
+      if (installedPackageJsonContent) {
+        try {
+          const installedPackageJson = JSON.parse(
+            installedPackageJsonContent.content
+          );
+          packageVersion = installedPackageJson.version;
+        } catch (e) {
+          // ignore
         }
-
-        context.packages.push({
-          name,
-          dependencyVersion,
-          packageVersion,
-        });
       }
+
+      context.packages.push({
+        name,
+        dependencyVersion,
+        packageVersion,
+        guides: hasGuides,
+        development: name in devDependencies,
+        optional: name in optionalDependencies,
+      });
     }
 
     return context;

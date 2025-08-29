@@ -59,53 +59,66 @@ describe("JavascriptLanguageAdapter", () => {
       expect(context.packageManager).toBe("pnpm");
     });
 
-    it("should discover packages and contrib packages", async () => {
+    it("should discover packages and their properties correctly", async () => {
       vol.fromJSON({
         "/test/workspace/package.json": JSON.stringify({
           dependencies: {
             "package-a": "1.0.0",
-            "package-b": "1.0.0",
-            "@scope/package-c": "1.0.0",
+          },
+          devDependencies: {
+            "package-b": "2.0.0",
+          },
+          optionalDependencies: {
+            "package-c": "3.0.0",
           },
         }),
         "/test/workspace/node_modules/package-a/package.json": JSON.stringify({
           version: "1.0.0",
         }),
-        "/test/workspace/node_modules/package-a/.guides/config.json": "{}",
+        "/test/workspace/node_modules/package-a/.guides/config.json": "{}", // Has guides
         "/test/workspace/node_modules/package-b/package.json": JSON.stringify({
-          version: "1.2.0",
+          version: "2.0.0",
         }),
-        "/test/workspace/node_modules/@dotguides-contrib/package-b/config.json":
-          "{}",
-        "/test/workspace/node_modules/@scope/package-c/package.json":
-          JSON.stringify({
-            version: "1.0.0",
-          }),
-        "/test/workspace/node_modules/@dotguides-contrib/scope__package-c/config.json":
-          "{}",
+        // package-b does not have guides
+        "/test/workspace/node_modules/package-c/package.json": JSON.stringify({
+          version: "3.0.0",
+        }),
+        "/test/workspace/node_modules/@dotguides-contrib/package-c/config.json":
+          "{}", // Has contrib guides
       });
 
       const adapter = new JavascriptLanguageAdapter();
       const context = await adapter.discover("/test/workspace");
 
       expect(context.packages).toHaveLength(3);
-      expect(
-        context.packages.sort((a, b) => a.name.localeCompare(b.name))
-      ).toEqual([
-        {
-          name: "@scope/package-c",
-          dependencyVersion: "1.0.0",
-          packageVersion: "1.0.0",
-        },
+      const sortedPackages = context.packages.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+
+      expect(sortedPackages).toEqual([
         {
           name: "package-a",
           dependencyVersion: "1.0.0",
           packageVersion: "1.0.0",
+          guides: true,
+          development: false,
+          optional: false,
         },
         {
           name: "package-b",
-          dependencyVersion: "1.0.0",
-          packageVersion: "1.2.0",
+          dependencyVersion: "2.0.0",
+          packageVersion: "2.0.0",
+          guides: false,
+          development: true,
+          optional: false,
+        },
+        {
+          name: "package-c",
+          dependencyVersion: "3.0.0",
+          packageVersion: "3.0.0",
+          guides: true,
+          development: false,
+          optional: true,
         },
       ]);
     });

@@ -30,9 +30,11 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.3",
+    "@types/semver": "^7.7.0",
     "dotprompt": "^1.1.1",
     "glob": "^10.4.1",
     "js-yaml": "^4.1.0",
+    "semver": "^7.7.2",
     "zod": "^4.0.17"
   }
 }
