@@ -36,9 +36,23 @@ export class Command {
   }
 
   render(
-    args: Record<string, string>,
-    context: RenderContext
+    context: RenderContext,
+    args?: Record<string, string>
   ): Promise<ContentBlock[]> {
-    return this.contentFile.render({ ...context, ...args });
+    return this.contentFile.render(context, args);
+  }
+
+  get signature(): string {
+    const parts = [this.config.name];
+    if (this.arguments) {
+      for (const arg of this.arguments) {
+        if (arg.required) {
+          parts.push(`<${arg.name}>`);
+        } else {
+          parts.push(`[${arg.name}]`);
+        }
+      }
+    }
+    return parts.join(" ");
   }
 }

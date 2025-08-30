@@ -28,6 +28,7 @@ import { InvalidRequestError } from "@modelcontextprotocol/sdk/server/auth/error
 import { z, toJSONSchema } from "zod";
 import { read_docs } from "./tools/read_docs.js";
 import { PROMPTS } from "./prompts/index.js";
+import { commandToPrompt } from "./prompts/command.js";
 
 const TOOLS = [read_docs];
 
@@ -158,20 +159,47 @@ export class DotguidesMcp {
   }
 
   async listPrompts(request: ListPromptsRequest): Promise<ListPromptsResult> {
+    const prompts = PROMPTS.map((p) => p.mcp);
+    for (const pkg of this.workspace.packages) {
+      for (const command of pkg.commands) {
+        prompts.push(commandToPrompt(pkg, command));
+      }
+    }
     return {
-      prompts: PROMPTS.map((p) => p.mcp),
+      prompts,
     };
   }
 
   async getPrompt(request: GetPromptRequest): Promise<GetPromptResult> {
-    const p = PROMPTS.find((p) => p.mcp.name === request.params.name);
-    if (!p)
+    const staticPrompt = PROMPTS.find(
+      (p) => p.mcp.name === request.params.name
+    );
+    if (staticPrompt) {
+      return staticPrompt.fn(request.params.arguments || {}, {
+        workspace: this.workspace,
+      });
+    }
+
+    const [pkgName, commandName] = request.params.name.split(":");
+    if (!pkgName || !commandName) {
       throw new InvalidRequestError(
         `Prompt '${request.params.name}' was not found.`
       );
-    return p.fn(request.params.arguments || {}, {
-      workspace: this.workspace,
-    });
+    }
+    const pkg = this.workspace.packageMap[pkgName];
+    if (!pkg) {
+      throw new InvalidRequestError(
+        `Package '${pkgName}' not found for prompt '${request.params.name}'.`
+      );
+    }
+    const command = pkg.commands.find((c) => c.config.name === commandName);
+    if (!command) {
+      throw new InvalidRequestError(
+        `Command '${commandName}' not found for package '${pkgName}'.`
+      );
+    }
+    const prompt = commandToPrompt(pkg, command);
+    return (prompt as any).execute(request.params.arguments || {}, undefined);
   }
 
   start(transport: Transport = new StdioServerTransport()) {

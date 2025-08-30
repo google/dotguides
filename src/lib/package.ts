@@ -6,13 +6,14 @@ import { existsAny, readAny } from "./file-utils.js";
 import { Guide } from "./guide.js";
 import {
   GUIDE_TYPES,
+  type CommandConfig,
   type ContentConfig,
   type DotguidesConfig,
   type RenderContext,
 } from "./types.js";
 import type { Workspace } from "./workspace.js";
 import { Dotprompt } from "dotprompt";
-import { existsSync, readFileSync } from "fs";
+import { readFileSync } from "fs";
 import { packageHelpers } from "./prompt-helpers.js";
 
 export class Package {
@@ -106,34 +107,31 @@ export class Package {
 
     // Process commands
     const commandsConfig = this.config?.commands || [];
-    const commandNamesFromConfig = new Set(commandsConfig.map((c) => c.name));
-    const commandsDir = join(this.guidesDir, "commands");
-    const commandPromises: Promise<Command>[] = [];
+    const discoveredCommands = new Map<string, ContentConfig>();
+    const commandsDir = resolve(this.guidesDir, "commands");
     if (await stat(commandsDir).catch(() => false)) {
       const commandFiles = await readdir(commandsDir);
       for (const commandFile of commandFiles) {
-        if (commandFile.endsWith(".md")) {
+        if (commandFile.endsWith(".md") || commandFile.endsWith(".prompt")) {
           const name = parse(commandFile).name;
-          const path = join(commandsDir, commandFile);
-          const config = commandsConfig.find((c) => c.name === name) || {
-            name,
-            description: "",
-            arguments: [],
-            path,
-          };
-          commandPromises.push(Command.load(this, { path }, config));
-          commandNamesFromConfig.delete(name);
+          const path = relative(this.guidesDir, join(commandsDir, commandFile));
+          discoveredCommands.set(name, { name, path });
         }
       }
     }
-    for (const name of Array.from(commandNamesFromConfig)) {
-      const config = commandsConfig.find((c) => c.name === name);
-      if (config?.url) {
-        commandPromises.push(Command.load(this, { url: config.url }, config));
-      } else if (config?.path) {
-        commandPromises.push(Command.load(this, { path: config.path }, config));
-      }
+
+    const allCommands = new Map<string, CommandConfig>();
+    for (const [name, config] of discoveredCommands) {
+      allCommands.set(name, config);
     }
+    for (const command of commandsConfig) {
+      allCommands.set(command.name, command);
+    }
+
+    const commandPromises = Array.from(allCommands.values()).map((config) => {
+      const source = config.url ? { url: config.url } : { path: config.path! };
+      return Command.load(this, source, config);
+    });
 
     const [guides, discoveredDocConfigs, commands] = await Promise.all([
       Promise.all(guidePromises),

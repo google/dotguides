@@ -92,7 +92,7 @@ export async function inspectCommand(packageName: string | undefined) {
   if (pkg.commands.length > 0) {
     console.log("  Commands:");
     for (const command of pkg.commands) {
-      console.log(`    - ${command.config.name}`);
+      console.log(`    - ${command.signature}`);
     }
   }
 }

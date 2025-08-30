@@ -47,7 +47,12 @@ export class MarkdownFile implements ContentFile {
     return new MarkdownFile(finalSource, pkg, content);
   }
 
-  async render(context: RenderContext): Promise<ContentBlock[]> {
+  async render(
+    context: RenderContext,
+    args?: Record<string, any>
+  ): Promise<ContentBlock[]> {
+    if (args)
+      throw new Error("Markdown files can't be rendered with arguments.");
     return [{ type: "text", text: this.content }];
   }
 }

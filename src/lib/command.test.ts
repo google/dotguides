@@ -1,35 +1,70 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { Command } from "./command.js";
-import { vol } from "memfs";
-import type { fs } from "memfs";
+import type { ContentFile } from "./content-file.js";
 import type { Package } from "./package.js";
 
-vi.mock("fs/promises", async () => {
-  const memfs: { fs: typeof fs } = await vi.importActual("memfs");
-  return memfs.fs.promises;
-});
+vi.mock("./content-file.js");
 
 describe("Command", () => {
-  beforeEach(() => {
-    vol.reset();
-  });
-
-  it("should be instantiable", async () => {
-    const filePath = "/test.md";
-    const fileContent = "command content";
-    vol.fromJSON({ [filePath]: fileContent });
-
-    const mockPackage = { name: "test-pkg" } as Package;
-    const command = await Command.load(
-      mockPackage,
-      { path: filePath },
+  describe("signature", () => {
+    const tests = [
       {
-        path: filePath,
-        name: "Test Command",
-        description: "A test command.",
-        arguments: [],
-      }
-    );
-    expect(command).toBeInstanceOf(Command);
+        desc: "no arguments",
+        name: "test",
+        args: undefined,
+        expect: "test",
+      },
+      {
+        desc: "one required argument",
+        name: "test",
+        args: [{ name: "arg1", required: true, description: "" }],
+        expect: "test <arg1>",
+      },
+      {
+        desc: "one optional argument",
+        name: "test",
+        args: [{ name: "arg1", required: false, description: "" }],
+        expect: "test [arg1]",
+      },
+      {
+        desc: "mixed arguments",
+        name: "test",
+        args: [
+          { name: "arg1", required: true, description: "" },
+          { name: "arg2", required: false, description: "" },
+        ],
+        expect: "test <arg1> [arg2]",
+      },
+    ];
+
+    for (const test of tests) {
+      it(test.desc, async () => {
+        const { loadContentFile } = await import("./content-file.js");
+        const mockContentFile: Partial<ContentFile> = {
+          frontmatter: { arguments: test.args },
+        };
+        vi.mocked(loadContentFile).mockResolvedValue(
+          mockContentFile as ContentFile
+        );
+
+        const config: any = {
+          name: test.name,
+          path: "test.prompt",
+        };
+        if (test.args) {
+          config.arguments = test.args;
+        }
+
+        const command = await Command.load(
+          {
+            guidesDir: "/test",
+            dotprompt: { parse: () => ({ frontmatter: {} }) },
+          } as unknown as Package,
+          { path: "test.prompt" },
+          config
+        );
+        expect(command.signature).toBe(test.expect);
+      });
+    }
   });
 });

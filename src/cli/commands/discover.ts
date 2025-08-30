@@ -12,5 +12,10 @@ export async function discoverCommand() {
 
   for (const pkg of Object.values(workspace.packageMap)) {
     console.log(`- ${pkg.name}`);
+    if (pkg.commands.length > 0) {
+      for (const command of pkg.commands) {
+        console.log(`    ${command.signature}`);
+      }
+    }
   }
 }

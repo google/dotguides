@@ -32,7 +32,7 @@ export interface CommandArgument {
   required?: boolean;
 }
 
-export type CommandConfig = ContentConfig & { arguments: CommandArgument[] };
+export type CommandConfig = ContentConfig & { arguments?: CommandArgument[] };
 
 export type DocConfig = ContentConfig;
 export type PartialConfig = ContentConfig;

@@ -132,4 +132,125 @@ describe("Package", () => {
       });
     }
   });
+
+  describe("commands", () => {
+    it("should discover commands from the filesystem", async () => {
+      vol.fromJSON({
+        "/test/package/.guides/commands/command1.md": "command1",
+        "/test/package/.guides/commands/command2.prompt": "command2",
+      });
+
+      const workspace = {
+        directories: ["/test"],
+        languages: [
+          {
+            packages: [
+              {
+                name: "test-package",
+                packageVersion: "1.0.0",
+                dependencyVersion: "1.0.0",
+              },
+            ],
+          },
+        ],
+        dotprompt: { parse: () => ({ frontmatter: {} }) },
+      } as unknown as Workspace;
+      const pkg = await Package.load(
+        workspace,
+        "test-package",
+        "/test/package/.guides"
+      );
+
+      expect(pkg.commands.length).toBe(2);
+      const commandNames = pkg.commands.map((c) => c.config.name).sort();
+      expect(commandNames).toEqual(["command1", "command2"]);
+    });
+
+    it("should load commands from config.json", async () => {
+      const guidesJsonContent = {
+        commands: [
+          {
+            name: "command1",
+            path: "c1.md",
+          },
+          {
+            name: "command2",
+            url: "http://example.com/c2.md",
+          },
+        ],
+      };
+      vol.fromJSON({
+        "/test/package/.guides/config.json": JSON.stringify(guidesJsonContent),
+        "/test/package/.guides/c1.md": "command1",
+      });
+
+      const workspace = {
+        directories: ["/test"],
+        languages: [
+          {
+            packages: [
+              {
+                name: "test-package",
+                packageVersion: "1.0.0",
+                dependencyVersion: "1.0.0",
+              },
+            ],
+          },
+        ],
+      } as unknown as Workspace;
+      const pkg = await Package.load(
+        workspace,
+        "test-package",
+        "/test/package/.guides"
+      );
+
+      expect(pkg.commands.length).toBe(2);
+      const commandNames = pkg.commands.map((c) => c.config.name).sort();
+      expect(commandNames).toEqual(["command1", "command2"]);
+    });
+
+    it("should prioritize configured commands over discovered ones", async () => {
+      const guidesJsonContent = {
+        commands: [
+          {
+            name: "command1",
+            path: "configured.md",
+            description: "configured",
+          },
+        ],
+      };
+      vol.fromJSON({
+        "/test/package/.guides/config.json": JSON.stringify(guidesJsonContent),
+        "/test/package/.guides/commands/command1.md": "discovered",
+        "/test/package/.guides/configured.md": "configured",
+      });
+
+      const workspace = {
+        directories: ["/test"],
+        languages: [
+          {
+            packages: [
+              {
+                name: "test-package",
+                packageVersion: "1.0.0",
+                dependencyVersion: "1.0.0",
+              },
+            ],
+          },
+        ],
+      } as unknown as Workspace;
+      const pkg = await Package.load(
+        workspace,
+        "test-package",
+        "/test/package/.guides"
+      );
+
+      expect(pkg.commands.length).toBe(1);
+      const command = pkg.commands[0];
+      expect(command).toBeDefined();
+      if (command) {
+        expect(command.config.description).toBe("configured");
+      }
+    });
+  });
 });
