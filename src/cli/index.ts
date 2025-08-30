@@ -3,6 +3,7 @@
 import { parseArgs } from "util";
 import { fileURLToPath } from "url";
 import { resolve } from "path";
+import { createCommand } from "./commands/create.js";
 import { discoverCommand } from "./commands/discover.js";
 import { inspectCommand } from "./commands/inspect.js";
 import { rulesCommand } from "./commands/rules.js";
@@ -37,6 +38,7 @@ export async function runCli(argv: string[]) {
     console.log("  discover\tDiscover .guides content in the workspace");
     console.log("  inspect\tInspect a specific .guides package");
     console.log("  rules\t\tOutput the rules for the workspace");
+    console.log("  create\tCreate a new .guides directory with default files");
     console.log("  init\t\tInitialize a new .guides package");
     console.log("  up\t\tBootstrap Gemini CLI to use dotguides");
     return;
@@ -54,6 +56,9 @@ export async function runCli(argv: string[]) {
       break;
     case "init":
       await initCommand();
+      break;
+    case "create":
+      await createCommand();
       break;
     case "up":
       await upCommand();

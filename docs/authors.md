@@ -108,9 +108,32 @@ Docs provide detailed topic-based information about using your library that can 
 - Descriptions should _tell agents when they should read the doc_, for example: "read this to understand how to build multi-step workflows".
 - You can reference docs within themselves or within guides to refer the agent, for example "for more about deployment, see docs:{package_name}/deployment". Make sure to add the `docs:` prefix and don't add a file extension when referencing docs in your content.
 
-## [COMING SOON] `commands/*.{md|prompt}`
+## `commands/*.{md|prompt}`
 
-A collection of fully customizable executable commands for common tasks related to your library.
+Commands are custom prompts that can be used to automate complex repeated tasks for your library such as generating a new route in a web framework or running through a security checklist. Commands can take zero or more arguments that can then be used to inform their behavior.
+
+- Commands can be arbitrary length (\*\*recommend \<10K tokens)
+- Commands **SHOULD** be named using `snake_case`
+
+**NOTE:** You _MUST_ use `.prompt` templates to be able to make use of template variables. `.md` files cannot make use of arguments.
+
+Command arguments are defined in the frontmatter of the file and are directly accessible as input variables in the template itself:
+
+```prompt
+---
+arguments:
+  - name: route_name
+    description: the name of the route to generate
+    required: true
+  - name: description
+    description: a description of what the route should do
+---
+
+Create a new file in `src/routes/{{ route_name }}.ts`.{{#if description}}
+
+Description: {{description}}
+{{/if}}
+```
 
 ## [COMING SOON] `examples/**/*.*`
 
