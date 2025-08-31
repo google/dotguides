@@ -6,6 +6,11 @@ Dotguides is a library, CLI, and MCP server for automatically discovering LLM-fr
 - `src/cli`: CLI code, leverages library code for logic
 - `src/mcp`: MCP server code, leverages library code for logic and started with `dotguides mcp` CLI command
 
+## Workflow
+
+- When starting a task, run `git status` to see if the git history is clean. If not, ask the user if they want to commit or start the task with dirty history.
+- After completing a task, formulate a git commit for your work with a sensible message following conventional commits form. Make sure to confirm with the user before committing.
+
 ## General Guidance
 
 - Before completing a task, run `pnpm test` to make sure tests are passing.
