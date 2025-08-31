@@ -9,21 +9,14 @@ export const CONFIG_JSON_CONTENT = `{
 }
 `;
 
-export const USAGE_PROMPT_CONTENT = `The following are rules for using this library.
+export const USAGE_PROMPT_CONTENT = `The usage guide should be a concise (<1K tokens) summary of the most important usage information for your library.
 
-- DO use the library to do awesome things.
-- DO NOT use the library to do evil things.
-
-For more information, see the following docs:
-
-{{#each docs}}
-- {{this.name}}: {{this.description}}
-{{/each}}
-`;
+- Consider mentioning that that package is version {{ @packageVersion }} to help ground the model.
+- Test your usage guide against common tasks to see if it improves model accuracy.`;
 
 export const TOPIC_PROMPT_CONTENT = `---
-name: topic
-description: Read this doc to learn more about a specific topic
+title: Topic One
+description: read this doc to learn more about a specific topic
 ---
-This document provides more information about a specific topic.
+Create docs files for detailed topical guides for your library. Top-level files may be automatically listed
 `;

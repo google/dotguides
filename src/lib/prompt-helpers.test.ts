@@ -17,6 +17,7 @@ describe("packageHelpers", () => {
   describe("packageFile", () => {
     const mockPackage = {
       name: "test-package",
+      dir: "/workspace/node_modules/test-package",
       workspace: {
         directories: ["/workspace"],
         languages: [
@@ -25,6 +26,7 @@ describe("packageHelpers", () => {
             packages: [
               {
                 name: "test-package",
+                dir: "/workspace/node_modules/test-package",
                 packageVersion: "1.0.0",
                 dependencyVersion: "1.0.0",
                 guides: true,
@@ -38,7 +40,6 @@ describe("packageHelpers", () => {
     it("should return file contents if found", () => {
       vol.fromJSON({
         "/workspace/node_modules/test-package/test-file.txt": "hello world",
-        "/workspace/package.json": `{"name": "workspace", "dependencies": {"test-package": "1.0.0"}}`,
       });
 
       const helpers = packageHelpers(mockPackage);
@@ -57,15 +58,18 @@ hello world
     });
 
     it("should return an error if file not found", () => {
-      vol.fromJSON({
-        "/workspace/package.json": `{"name": "workspace", "dependencies": {"test-package": "1.0.0"}}`,
-      });
+      vol.fromJSON({});
       const helpers = packageHelpers(mockPackage);
       if (!helpers?.packageFile) {
         throw new Error("packageFile helper not found");
       }
       const result = helpers.packageFile("non-existent-file.txt");
-      expect(result).toEqual(`<file path="" error="FILE_NOT_FOUND"/>`);
+      const expectedPath = resolve(
+        "/workspace/node_modules/test-package/non-existent-file.txt"
+      );
+      expect(result).toEqual(
+        `<file path="${expectedPath}" error="FILE_NOT_FOUND"/>`
+      );
     });
   });
 

@@ -129,6 +129,7 @@ packages:
           packages: [
             {
               name: "package_a",
+              dir: "/home/.pub-cache/hosted/pub.dev/package_a-1.0.0",
               dependencyVersion: "^1.0.0",
               packageVersion: "1.0.0",
               guides: true,
@@ -137,6 +138,7 @@ packages:
             },
             {
               name: "package_b",
+              dir: "/home/.pub-cache/hosted/pub.dev/package_b-2.0.0",
               dependencyVersion: "^2.0.0",
               packageVersion: "2.0.0",
               guides: false,
@@ -145,6 +147,7 @@ packages:
             },
             {
               name: "test",
+              dir: "/home/.pub-cache/hosted/pub.dev/test-1.21.0",
               dependencyVersion: "^1.21.0",
               packageVersion: "1.21.0",
               guides: true,
@@ -189,6 +192,7 @@ packages:
           packages: [
             {
               name: "some_package",
+              dir: "/home/.pub-cache/hosted/pub.dev/some_package-1.0.0",
               dependencyVersion: "^1.0.0",
               packageVersion: "1.0.0",
               guides: true,
@@ -233,6 +237,7 @@ packages:
           packages: [
             {
               name: "loudify",
+              dir: "/Users/sethladd/Code/loudify/loudify",
               dependencyVersion: {
                 path: "/Users/sethladd/Code/loudify/loudify",
               },
@@ -328,6 +333,7 @@ packages:
           packages: [
             {
               name: "build_runner",
+              dir: "/home/.pub-cache/hosted/pub.dev/build_runner-2.4.6",
               dependencyVersion: "^2.4.6",
               packageVersion: "unknown",
               guides: false,
@@ -336,6 +342,7 @@ packages:
             },
             {
               name: "http",
+              dir: "/home/.pub-cache/hosted/pub.dev/http-0.13.5",
               dependencyVersion: "^0.13.5",
               packageVersion: "0.13.5",
               guides: true,
@@ -344,6 +351,7 @@ packages:
             },
             {
               name: "json_annotation",
+              dir: "/home/.pub-cache/hosted/pub.dev/json_annotation-4.8.1",
               dependencyVersion: "^4.8.1",
               packageVersion: "unknown",
               guides: false,
@@ -352,6 +360,7 @@ packages:
             },
             {
               name: "json_serializable",
+              dir: "/home/.pub-cache/hosted/pub.dev/json_serializable-6.7.1",
               dependencyVersion: "^6.7.1",
               packageVersion: "unknown",
               guides: false,
@@ -360,6 +369,7 @@ packages:
             },
             {
               name: "meta",
+              dir: "/home/.pub-cache/hosted/pub.dev/meta-1.9.1",
               dependencyVersion: "any",
               packageVersion: "unknown",
               guides: false,
@@ -368,6 +378,7 @@ packages:
             },
             {
               name: "test",
+              dir: "/home/.pub-cache/hosted/pub.dev/test-1.21.0",
               dependencyVersion: "^1.21.0",
               packageVersion: "1.21.0",
               guides: true,

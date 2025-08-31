@@ -11,22 +11,10 @@ export function packageHelpers(
 ): NonNullable<DotpromptOptions["helpers"]> {
   return {
     packageFile: (path: string): string => {
-      const language = pkg.workspace.languages.find((l) =>
-        l.packages.find((p) => p.name === pkg.name)
-      );
-      if (!language) {
-        return `<file path="" error="FILE_NOT_FOUND"/>`;
+      if (!pkg.dir) {
+        return `<file path="" error="PACKAGE_DIRECTORY_NOT_FOUND"/>`;
       }
-      const workspaceDir = pkg.workspace.directories.find((dir) =>
-        language.packages.find(
-          (p) => p.name === pkg.name && readFileSync(join(dir, "package.json"))
-        )
-      );
-      if (!workspaceDir) {
-        return `<file path="" error="FILE_NOT_FOUND"/>`;
-      }
-      const packagePath = join(workspaceDir, "node_modules", pkg.name);
-      const absolutePath = resolve(packagePath, path);
+      const absolutePath = resolve(pkg.dir, path);
       try {
         const fileContents = readFileSync(absolutePath, "utf-8");
         const fileExt = extname(absolutePath).slice(1);
@@ -36,7 +24,7 @@ ${fileContents}
 \`\`\`
 </file>`;
       } catch (e) {
-        return `<file path="" error="FILE_NOT_FOUND"/>`;
+        return `<file path="${absolutePath}" error="FILE_NOT_FOUND"/>`;
       }
     },
     workspaceFile: (path: string): string => {

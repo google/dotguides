@@ -1,5 +1,9 @@
 - [x] When doing Dotprompt, make the package version accessible from the prompt context
-- [ ] Make `dotguides create` to bootstrap a `.guides` folder in the current directory.
+- [x] Make `dotguides create` to bootstrap a `.guides` folder in the current directory.
+- [x] Implement commands.
+- [ ] Implement support for Go.
+- [ ] Implement support for Python.
+- [ ] Implement CLI commands to make testing things easier. Maybe `dotguides preview [--package <name>] <resource_type> <name> <...optional_args>` or something.
 - [ ] A `dotguides install` that installs contrib guidance where detected for the project.
 - [ ] A `dotguides customize [-g] <package_name>` command that allows the user to create per-workspace or user-global guidance for a package. Copies the existing data (if any) and then can be customized.
 - [ ] An `upgrade` guide that walks the user through a major version upgrade of the package.
@@ -8,5 +12,6 @@
 - [ ] Maybe have a way to allow libraries to "detect" whether they've already been setup through a simple file existence check or a regex code search.
 - [ ] Make it easy to embed resources via Dotprompt, so the setup guide can include certain docs for example.
 - [ ] Support `~/.guides/{lang}/{package}` for custom contrib guides. Question: are these overrides or fallbacks?
-- [ ] Support ~/.guides/aliases.json`for some kind of custom aliasing (e.g. load guidance for`foo`package from`my-custom-foo-guides` package).
+- [ ] Support `~/.guides/aliases.json` for some kind of custom aliasing (e.g. load guidance for `foo` package from `my-custom-foo-guides` package).
 - [ ] When reading a doc with children (e.g. reading `docs:mypackage:foo` when `docs:mypackage:foo/bar` exists), automatically list child docs at the end of the content.
+- [ ] Implement examples -- pull code snippets and have frontmatter able to be defined in top-of-file comment blocks

@@ -35,13 +35,13 @@ describe("commandToPrompt", () => {
 
     const result = await (prompt as any).execute({ arg1: "value1" }, undefined);
     expect(command.render).toHaveBeenCalledWith(
-      { arg1: "value1" },
       {
         workspaceDir: "/test",
         packageVersion: "1.0.0",
         dependencyVersion: "1.0.0",
         language: { name: "javascript" },
-      }
+      },
+      { arg1: "value1" }
     );
     expect(result).toEqual({
       messages: [

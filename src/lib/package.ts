@@ -23,6 +23,7 @@ export class Package {
   readonly commands: Command[] = [];
   public packageVersion: string | undefined;
   public dependencyVersion: string | undefined;
+  public dir: string | undefined;
   readonly dotprompt: Dotprompt;
 
   constructor(
@@ -66,6 +67,7 @@ export class Package {
       if (packageInfo) {
         this.packageVersion = packageInfo.packageVersion;
         this.dependencyVersion = packageInfo.dependencyVersion;
+        this.dir = packageInfo.dir;
       }
     }
     const guidesJson = await readAny(this.guidesDir, "config.json");

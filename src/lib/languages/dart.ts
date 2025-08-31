@@ -76,6 +76,7 @@ export class DartLanguageAdapter implements LanguageAdapter {
 
       context.packages.push({
         name: pkg.name,
+        dir: pkg.rootPath,
         dependencyVersion,
         packageVersion,
         guides: hasGuides,

@@ -7,6 +7,8 @@ export interface PackageInfo {
   packageVersion: string;
   /** The semver string provided by the user in the dependency file. */
   dependencyVersion: string;
+  /** The absolute path to the installed package directory. */
+  dir: string;
   /** True if this is a development dependency and not a production dependency. */
   development?: boolean;
   /** True if this is an optional dependency. */

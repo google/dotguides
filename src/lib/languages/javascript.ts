@@ -123,6 +123,7 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
 
       context.packages.push({
         name,
+        dir: packagePath,
         dependencyVersion,
         packageVersion,
         guides: hasGuides,

@@ -98,6 +98,7 @@ describe("JavascriptLanguageAdapter", () => {
       expect(sortedPackages).toEqual([
         {
           name: "package-a",
+          dir: "/test/workspace/node_modules/package-a",
           dependencyVersion: "1.0.0",
           packageVersion: "1.0.0",
           guides: true,
@@ -106,6 +107,7 @@ describe("JavascriptLanguageAdapter", () => {
         },
         {
           name: "package-b",
+          dir: "/test/workspace/node_modules/package-b",
           dependencyVersion: "2.0.0",
           packageVersion: "2.0.0",
           guides: false,
@@ -114,6 +116,7 @@ describe("JavascriptLanguageAdapter", () => {
         },
         {
           name: "package-c",
+          dir: "/test/workspace/node_modules/package-c",
           dependencyVersion: "3.0.0",
           packageVersion: "3.0.0",
           guides: true,
