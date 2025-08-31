@@ -1,6 +1,7 @@
 import { Package } from "./package.js";
 import { JavascriptLanguageAdapter } from "./languages/javascript.js";
 import { DartLanguageAdapter } from "./languages/dart.js";
+import { GoLanguageAdapter } from "./languages/go.js";
 import {
   type LanguageAdapter,
   type LanguageContext,
@@ -15,6 +16,7 @@ export class Workspace {
   private languageAdapters: LanguageAdapter[] = [
     new JavascriptLanguageAdapter(),
     new DartLanguageAdapter(),
+    new GoLanguageAdapter(),
   ];
   readonly packageMap: { [name: string]: Package } = {};
 
