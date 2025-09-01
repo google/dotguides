@@ -85,5 +85,8 @@ ${commandOutput.trim()}
     contains: (str: any, find: any) => {
       return str.includes(find);
     },
+    embedDoc: (name: string) => {
+      return `<<<dotguides:embed type="doc" name="${name}">>>`;
+    },
   };
 }

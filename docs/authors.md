@@ -255,4 +255,7 @@ Check for dep:
 
 Check for substring match:
 {{#if (contains @hints.modelName "gemini") }}
+
+Embed a doc from the package's docs:
+{{ embedDoc "name/of/doc" }}
 ```

@@ -48,11 +48,65 @@ export class PromptFile implements ContentFile {
       context: { ...this.pkg.renderContext(), ...context },
       input: args || {},
     });
-    return result.messages.reduce<ContentBlock[]>((acc, m) => {
+    const initialBlocks = result.messages.reduce<ContentBlock[]>((acc, m) => {
       for (const part of m.content) {
         if (part.text) acc.push({ type: "text", text: part.text });
       }
       return acc;
     }, []);
+
+    const finalBlocks: ContentBlock[] = [];
+    for (const block of initialBlocks) {
+      if (
+        block.type !== "text" ||
+        !block.text ||
+        !block.text.includes("<<<dotguides:embed")
+      ) {
+        finalBlocks.push(block);
+        continue;
+      }
+
+      const text = block.text;
+      const embedRegex = /<<<dotguides:embed type="doc" name="([^"]+)">>>/g;
+
+      const segments: (string | Promise<string>)[] = [];
+      let lastIndex = 0;
+      let match;
+
+      while ((match = embedRegex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          segments.push(text.substring(lastIndex, match.index));
+        }
+
+        const docName = match[1];
+        const doc = this.pkg.docs.find((d) => d.name === docName);
+
+        const docUri = `docs:${this.pkg.name}:${docName}`;
+
+        if (doc) {
+          segments.push(
+            doc.render(context).then((renderedBlocks) => {
+              const content = renderedBlocks
+                .map((b) => b.text || "")
+                .join("\n")
+                .trim();
+              return `\n<doc uri="${docUri}" title="${doc.title}">\n${content}\n</doc>\n`;
+            })
+          );
+        } else {
+          segments.push(`\n<doc uri="${docUri}" error="NOT_FOUND" />\n`);
+        }
+
+        lastIndex = embedRegex.lastIndex;
+      }
+
+      if (lastIndex < text.length) {
+        segments.push(text.substring(lastIndex));
+      }
+
+      const resolvedSegments = await Promise.all(segments);
+      finalBlocks.push({ type: "text", text: resolvedSegments.join("") });
+    }
+    return finalBlocks;
   }
 }
