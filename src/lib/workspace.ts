@@ -1,23 +1,17 @@
 import { Package } from "./package.js";
-import { JavascriptLanguageAdapter } from "./languages/javascript.js";
-import { DartLanguageAdapter } from "./languages/dart.js";
-import { GoLanguageAdapter } from "./languages/go.js";
 import {
   type LanguageAdapter,
   type LanguageContext,
   packagesWithGuides,
 } from "./language-adapter.js";
+import { allLanguages } from "./language.js";
 import { renderDetails, section } from "./render-utils.js";
 import type { Doc } from "./doc.js";
 import { nullable } from "zod";
 
 export class Workspace {
   readonly languages: LanguageContext[] = [];
-  private languageAdapters: LanguageAdapter[] = [
-    new JavascriptLanguageAdapter(),
-    new DartLanguageAdapter(),
-    new GoLanguageAdapter(),
-  ];
+  private languageAdapters: LanguageAdapter[] = allLanguages;
   readonly packageMap: { [name: string]: Package } = {};
 
   constructor(public directories: string[]) {}

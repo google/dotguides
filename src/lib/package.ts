@@ -72,7 +72,13 @@ export class Package {
     }
     const guidesJson = await readAny(this.guidesDir, "config.json");
     if (guidesJson) {
-      this.config = JSON.parse(guidesJson.content);
+      try {
+        this.config = JSON.parse(guidesJson.content);
+      } catch (e) {
+        console.error(
+          `Unable to parse '${resolve(this.guidesDir, "config.js")}': ${e}`
+        );
+      }
     }
 
     // Process guides

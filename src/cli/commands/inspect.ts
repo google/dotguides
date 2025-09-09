@@ -1,41 +1,47 @@
-import { readFile, stat } from "fs/promises";
-import { basename, join } from "path";
+import { readFile } from "fs/promises";
+import { basename, join, resolve } from "path";
 import { Package } from "../../lib/package.js";
 import { Workspace } from "../../lib/workspace.js";
 import { countTokens, formatTokenCount } from "../../lib/render-utils.js";
 import { existsSync } from "fs";
+import { detectLanguage } from "../../lib/language.js";
 
-export async function inspectCommand(packageName: string | undefined) {
+export async function inspectCommand(packageNameOrPath: string | undefined) {
   let pkg: Package | undefined;
+  const loadPath = packageNameOrPath
+    ? resolve(process.cwd(), packageNameOrPath)
+    : process.cwd();
 
-  if (packageName) {
+  if (packageNameOrPath && !existsSync(loadPath)) {
     const workspace = await Workspace.load([process.cwd()]);
-    pkg = workspace.packageMap[packageName];
+    pkg = workspace.packageMap[packageNameOrPath];
   } else {
-    try {
-      console.log(process.cwd(), existsSync(join(process.cwd(), ".guides")));
-      if (existsSync(join(process.cwd(), ".guides"))) {
-        let name = basename(process.cwd());
-        try {
-          const packageJsonContent = await readFile("package.json", "utf-8");
-          name = JSON.parse(packageJsonContent).name;
-        } catch {
-          // ignore, use directory name
-        }
-        const workspace = await Workspace.load([process.cwd()]);
-        pkg = await Package.load(workspace, name, ".guides");
+    const [adapter, context] = await detectLanguage(loadPath);
+    if (adapter && context) {
+      const workspace = new Workspace([loadPath]);
+      workspace.languages.push(context);
+      let name = basename(loadPath);
+      try {
+        const packageJsonContent = await readFile(
+          join(loadPath, "package.json"),
+          "utf-8"
+        );
+        name = JSON.parse(packageJsonContent).name;
+      } catch {
+        // ignore, use directory name
       }
-    } catch (e) {
-      console.error(e);
+      pkg = await adapter.loadPackage(workspace, loadPath, name);
+      workspace.packageMap[pkg.name] = pkg;
+    } else {
       console.error(
-        "Package name is required, or run from a directory with a .guides folder."
+        `Could not determine language for directory ${loadPath}. No dotguides-compatible language detected.`
       );
       process.exit(1);
     }
   }
 
   if (!pkg) {
-    console.error(`Package "${packageName || "."}" not found.`);
+    console.error(`Package "${packageNameOrPath || "."}" not found.`);
     process.exit(1);
   }
 
