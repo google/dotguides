@@ -2,6 +2,7 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { Workspace } from "../lib/workspace.js";
 import { Server } from "@modelcontextprotocol/sdk/server";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { LoggingTransport } from "./logging-transport.js";
 import {
   CallToolRequestSchema,
   GetPromptRequestSchema,
@@ -57,6 +58,7 @@ export class DotguidesMcp {
       version: "0.1.0",
       title: "Dotguides",
     });
+    this.server.onerror = (e) => console.error(e);
     this.server.registerCapabilities({
       resources: {},
       tools: {},
@@ -203,6 +205,7 @@ export class DotguidesMcp {
   }
 
   start(transport: Transport = new StdioServerTransport()) {
-    return this.server.connect(transport);
+    const loggingTransport = new LoggingTransport(transport);
+    return this.server.connect(loggingTransport);
   }
 }

@@ -20,11 +20,13 @@ export function tool<I extends z.ZodType>(
   fn: ToolFn<I>;
   mcp: Tool;
 } {
+  const inputSchema = toJSONSchema(options.inputSchema) as any;
+  delete inputSchema["$schema"];
   return {
     fn: (input, context) => Promise.resolve(fn(input, context)),
     mcp: {
       name: options.name,
-      inputSchema: toJSONSchema(options.inputSchema) as any,
+      inputSchema,
       description: options.description,
       title: options.title,
     },

@@ -78,7 +78,6 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
       // should not happen based on early return
       return context;
     }
-    console.error("Parsing:", packageJsonContent.file);
     const packageJson = JSON.parse(packageJsonContent.content);
     const dependencies = packageJson.dependencies || {};
     const devDependencies = packageJson.devDependencies || {};
@@ -152,7 +151,6 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
     );
 
     const pkgPath = await existsAny(directory, guidesDir, contribPackagePath);
-    console.log(guidesDir, contribPackagePath, pkgPath);
     if (pkgPath) {
       return await Package.load(workspace, name, pkgPath);
     }
