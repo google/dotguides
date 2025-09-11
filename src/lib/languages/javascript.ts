@@ -14,18 +14,30 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
     const packageJsonPath = await existsAny(directory, "package.json");
     const tsconfigPath = await existsAny(directory, "tsconfig.json");
 
-    if (!packageJsonPath) {
+    const packageJsonContent = await readAny(directory, "package.json");
+
+    if (!packageJsonPath || !packageJsonContent) {
       return {
         detected: false,
         name: tsconfigPath ? "typescript" : "javascript",
         packages: [],
       };
     }
+    const packageJson = JSON.parse(packageJsonContent.content);
 
     const context: LanguageContext = {
       detected: true,
       name: tsconfigPath ? "typescript" : "javascript",
       packages: [],
+    };
+    const guidesDir = join(directory, ".guides");
+    const hasGuides = !!(await existsAny(null, guidesDir));
+    context.workspacePackage = {
+      name: packageJson.name,
+      packageVersion: packageJson.version,
+      dependencyVersion: packageJson.version,
+      dir: directory,
+      guides: hasGuides,
     };
 
     const packageLock = await existsAny(
@@ -73,12 +85,6 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
       context.runtimeVersion = versionFile.content.trim();
     }
 
-    const packageJsonContent = await readAny(directory, "package.json");
-    if (!packageJsonContent) {
-      // should not happen based on early return
-      return context;
-    }
-    const packageJson = JSON.parse(packageJsonContent.content);
     const dependencies = packageJson.dependencies || {};
     const devDependencies = packageJson.devDependencies || {};
     const optionalDependencies = packageJson.optionalDependencies || {};
@@ -140,23 +146,24 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
     directory: string,
     name: string
   ): Promise<Package> {
-    const packagePath = join("node_modules", name);
+    const packagePath = join(directory, "node_modules", name);
     const guidesDir = join(packagePath, ".guides");
     const contribPackageName = name.startsWith("@")
       ? name.substring(1).replace("/", "__")
       : name;
     const contribPackagePath = join(
+      directory,
       "node_modules",
       `@dotguides-contrib/${contribPackageName}`
     );
 
-    const pkgPath = await existsAny(directory, guidesDir, contribPackagePath);
+    const pkgPath = await existsAny(null, guidesDir, contribPackagePath);
     if (pkgPath) {
       return await Package.load(workspace, name, pkgPath);
     }
 
     throw new Error(
-      `Could not find guides for package '${name}' in directory '${directory}'`
+      `Could not find guides for dependency package '${name}' in directory '${directory}'`
     );
   }
 

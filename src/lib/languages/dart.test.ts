@@ -52,6 +52,13 @@ dependencies:
           runtime: "dart",
           runtimeVersion: ">=2.17.0 <4.0.0",
           packages: [],
+          workspacePackage: {
+            name: "my_dart_app",
+            packageVersion: "1.0.0",
+            dependencyVersion: "1.0.0",
+            dir: "/test/workspace",
+            guides: false,
+          },
         },
       },
       {
@@ -76,6 +83,13 @@ dependencies:
           runtime: "flutter",
           runtimeVersion: ">=2.17.0 <4.0.0",
           packages: [],
+          workspacePackage: {
+            name: "my_flutter_app",
+            packageVersion: "1.0.0",
+            dependencyVersion: "1.0.0",
+            dir: "/test/workspace",
+            guides: false,
+          },
         },
       },
       {
@@ -126,6 +140,13 @@ packages:
           name: "dart",
           packageManager: "pub",
           runtime: "dart",
+          workspacePackage: {
+            name: "my_dart_app",
+            packageVersion: "0.0.0",
+            dependencyVersion: "0.0.0",
+            dir: "/test/workspace",
+            guides: false,
+          },
           packages: [
             {
               name: "package_a",
@@ -189,6 +210,13 @@ packages:
           name: "dart",
           packageManager: "pub",
           runtime: "dart",
+          workspacePackage: {
+            name: "my_dart_app",
+            packageVersion: "0.0.0",
+            dependencyVersion: "0.0.0",
+            dir: "/test/workspace",
+            guides: false,
+          },
           packages: [
             {
               name: "some_package",
@@ -234,6 +262,13 @@ packages:
           name: "dart",
           packageManager: "pub",
           runtime: "dart",
+          workspacePackage: {
+            name: "my_dart_app",
+            packageVersion: "0.0.0",
+            dependencyVersion: "0.0.0",
+            dir: "/test/workspace",
+            guides: false,
+          },
           packages: [
             {
               name: "loudify",
@@ -330,6 +365,13 @@ packages:
           packageManager: "pub",
           runtime: "dart",
           runtimeVersion: ">=2.17.0 <4.0.0",
+          workspacePackage: {
+            name: "my_app",
+            packageVersion: "1.0.0",
+            dependencyVersion: "1.0.0",
+            dir: "/test/workspace",
+            guides: false,
+          },
           packages: [
             {
               name: "build_runner",
@@ -415,6 +457,7 @@ packages:
           a.name.localeCompare(b.name)
         );
         expect(sortedPackages).toEqual(sortedExpectedPackages);
+        expect(context.workspacePackage).toEqual(expected.workspacePackage);
       } finally {
         // Restore original HOME environment variable
         if (originalHome !== undefined) {
@@ -498,7 +541,7 @@ packages:
       await expect(
         adapter.loadPackage(workspace, "/test/workspace", "nonexistent")
       ).rejects.toThrow(
-        "Could not find .dart_tool/package_config.json for package nonexistent"
+        "Package nonexistent not found in .dart_tool/package_config.json"
       );
     });
 
@@ -554,7 +597,9 @@ packages:
 
       await expect(
         adapter.loadPackage(workspace, "/test/workspace", "nonexistent")
-      ).rejects.toThrow("Package nonexistent not found in package_config.json");
+      ).rejects.toThrow(
+        "Package nonexistent not found in .dart_tool/package_config.json"
+      );
     });
   });
 

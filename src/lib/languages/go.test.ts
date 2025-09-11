@@ -27,7 +27,7 @@ describe("GoLanguageAdapter", () => {
 
     it("should detect a go project with a go.mod file", async () => {
       vol.fromJSON({
-        "/test-project/go.mod": "go 1.18",
+        "/test-project/go.mod": "module my-project\ngo 1.18",
       });
 
       vi.mocked(exec).mockImplementation(((
@@ -45,11 +45,18 @@ describe("GoLanguageAdapter", () => {
       expect(context.detected).toBe(true);
       expect(context.name).toBe("go");
       expect(context.runtimeVersion).toBe("1.18");
+      expect(context.workspacePackage).toEqual({
+        name: "my-project",
+        packageVersion: "unknown",
+        dependencyVersion: "unknown",
+        dir: "/test-project",
+        guides: false,
+      });
     });
 
     it("should discover dependencies with guides", async () => {
       vol.fromJSON({
-        "/test-project/go.mod": "go 1.18",
+        "/test-project/go.mod": "module my-project\ngo 1.18",
         "/go/pkg/mod/github.com/some/dep@v1.2.3/.guides/guide.md": "...",
       });
 
@@ -87,9 +94,11 @@ github.com/another/dep v4.5.6 /go/pkg/mod/github.com/another/dep@v4.5.6
     it("should load a package with guides", async () => {
       vi.mocked(exec).mockImplementation(((
         command: string,
+        options: any,
         callback: (err: any, stdout: string, stderr: string) => void
       ) => {
-        callback(null, "/go/pkg/mod/github.com/some/dep@v1.2.3", "");
+        const cb = callback || options;
+        cb(null, "/go/pkg/mod/github.com/some/dep@v1.2.3", "");
       }) as any);
 
       vol.fromJSON({

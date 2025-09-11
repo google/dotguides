@@ -30,6 +30,8 @@ export interface LanguageContext {
   runtimeVersion?: string;
   /** The names of packages discovered for this language that have guides */
   packages: PackageInfo[];
+  /** The package for the workspace directory itself. */
+  workspacePackage?: PackageInfo;
 }
 
 export interface LanguageAdapter {

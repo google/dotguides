@@ -37,6 +37,18 @@ export class DartLanguageAdapter implements LanguageAdapter {
       try {
         pubspec = load(pubspecContent.content) as any;
 
+        if (pubspec?.name) {
+          const guidesDir = join(directory, ".guides");
+          const hasGuides = !!(await existsAny(null, guidesDir));
+          context.workspacePackage = {
+            name: pubspec.name,
+            packageVersion: pubspec.version || "0.0.0",
+            dependencyVersion: pubspec.version || "0.0.0",
+            dir: directory,
+            guides: hasGuides,
+          };
+        }
+
         // Check for Flutter project
         if (pubspec?.dependencies?.flutter) {
           context.name = "flutter";
@@ -93,24 +105,15 @@ export class DartLanguageAdapter implements LanguageAdapter {
     directory: string,
     name: string
   ): Promise<Package> {
-    // Check if package_config.json exists first
-    const packageConfigContent = await readAny(
-      directory,
-      ".dart_tool/package_config.json"
-    );
-    if (!packageConfigContent) {
-      throw new Error(
-        `Could not find .dart_tool/package_config.json for package ${name}`
-      );
-    }
-
     // Get package location from .dart_tool/package_config.json
     const packages = await this._parsePackageConfig(directory);
 
     // Find the specific package
     const pkg = packages.find((p) => p.name === name);
     if (!pkg) {
-      throw new Error(`Package ${name} not found in package_config.json`);
+      throw new Error(
+        `Package ${name} not found in .dart_tool/package_config.json`
+      );
     }
 
     // Find the first existing guides directory

@@ -29,6 +29,7 @@ describe("JavascriptLanguageAdapter", () => {
       const context = await adapter.discover("/test/workspace");
       expect(context.detected).toBe(false);
       expect(context.name).toBe("javascript");
+      expect(context.workspacePackage).toBeUndefined();
     });
 
     it("should return typescript if tsconfig.json is found", async () => {
@@ -38,15 +39,26 @@ describe("JavascriptLanguageAdapter", () => {
       const adapter = new JavascriptLanguageAdapter();
       const context = await adapter.discover("/test/workspace");
       expect(context.name).toBe("typescript");
+      expect(context.workspacePackage).toBeUndefined();
     });
 
     it("should return detected if package.json is found", async () => {
       vol.fromJSON({
-        "/test/workspace/package.json": "{}",
+        "/test/workspace/package.json": JSON.stringify({
+          name: "test-workspace",
+          version: "1.0.0",
+        }),
       });
       const adapter = new JavascriptLanguageAdapter();
       const context = await adapter.discover("/test/workspace");
       expect(context.detected).toBe(true);
+      expect(context.workspacePackage).toEqual({
+        name: "test-workspace",
+        packageVersion: "1.0.0",
+        dependencyVersion: "1.0.0",
+        dir: "/test/workspace",
+        guides: false,
+      });
     });
 
     it("should detect pnpm from pnpm-lock.yaml", async () => {

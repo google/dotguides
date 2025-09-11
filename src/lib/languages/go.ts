@@ -8,8 +8,9 @@ import type { Workspace } from "../workspace.js";
 export class GoLanguageAdapter implements LanguageAdapter {
   async discover(directory: string): Promise<LanguageContext> {
     const goModPath = join(directory, "go.mod");
+    let goModContent: string;
     try {
-      await stat(goModPath);
+      goModContent = await readFile(goModPath, "utf-8");
     } catch (e) {
       return {
         detected: false,
@@ -24,7 +25,18 @@ export class GoLanguageAdapter implements LanguageAdapter {
       packages: [],
     };
 
-    const goModContent = await readFile(goModPath, "utf-8");
+    const moduleMatch = goModContent.match(/^module\s+(.+)/m);
+    if (moduleMatch && moduleMatch[1]) {
+      const guidesDir = join(directory, ".guides");
+      const hasGuides = !!(await stat(guidesDir).catch(() => false));
+      context.workspacePackage = {
+        name: moduleMatch[1],
+        packageVersion: "unknown",
+        dependencyVersion: "unknown",
+        dir: directory,
+        guides: hasGuides,
+      };
+    }
 
     const goVersionMatch = goModContent.match(/^go\s+([0-9.]+)/m);
     if (goVersionMatch && goVersionMatch[1]) {
@@ -110,13 +122,17 @@ export class GoLanguageAdapter implements LanguageAdapter {
         stdout: string;
         stderr: string;
       }>((resolve, reject) => {
-        exec(`go list -f '{{.Dir}}' -m ${name}`, (error, stdout, stderr) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve({ stdout, stderr });
+        exec(
+          `go list -f '{{.Dir}}' -m ${name}`,
+          { cwd: directory },
+          (error, stdout, stderr) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve({ stdout, stderr });
+            }
           }
-        });
+        );
       });
 
       const packageDir = dir.trim();

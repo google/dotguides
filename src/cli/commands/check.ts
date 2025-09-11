@@ -1,17 +1,43 @@
+import { readFile } from "fs/promises";
+import { basename, join } from "path";
+import { existsAny } from "../../lib/file-utils.js";
 import { Package } from "../../lib/package.js";
 import { Workspace } from "../../lib/workspace.js";
 import { countTokens, formatTokenCount } from "../../lib/render-utils.js";
+import { detectLanguage } from "../../lib/language.js";
 
-export async function inspectCommand(packageName: string) {
-  const workspace = await Workspace.load([process.cwd()]);
-  const pkg = workspace.packageMap[packageName];
+export async function checkCommand() {
+  let pkg: Package | undefined;
+  const loadPath = process.cwd();
 
-  if (!pkg) {
-    console.error(`Package "${packageName}" not found.`);
+  const [adapter, context] = await detectLanguage(loadPath);
+  if (adapter && context) {
+    const workspace = new Workspace([loadPath]);
+    workspace.languages.push(context);
+    if (context.workspacePackage) {
+      const guidesDir = join(context.workspacePackage.dir, ".guides");
+      if (await existsAny(null, guidesDir)) {
+        pkg = await Package.load(
+          workspace,
+          context.workspacePackage.name,
+          guidesDir
+        );
+        workspace.packageMap[pkg.name] = pkg;
+      }
+    }
+  } else {
+    console.error(
+      `Could not determine language for directory ${loadPath}. No dotguides-compatible language detected.`
+    );
     process.exit(1);
   }
 
-  console.log(`Inspecting package: ${pkg.name}`);
+  if (!pkg) {
+    console.error(`Could not load package from current directory.`);
+    process.exit(1);
+  }
+
+  console.log(`Checking package: ${pkg.name}`);
 
   console.log("\nFeatures:");
 
