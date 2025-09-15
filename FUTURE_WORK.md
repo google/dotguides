@@ -1,7 +1,7 @@
 - [x] When doing Dotprompt, make the package version accessible from the prompt context
 - [x] Make `dotguides create` to bootstrap a `.guides` folder in the current directory.
 - [x] Implement commands.
-- [ ] Implement support for Go.
+- [x] Implement support for Go.
 - [ ] Implement support for Python.
 - [ ] Implement CLI commands to make testing things easier. Maybe `dotguides preview [--package <name>] <resource_type> <name> <...optional_args>` or something.
 - [ ] A `dotguides install` that installs contrib guidance where detected for the project.
