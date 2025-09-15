@@ -1,13 +1,12 @@
 import type { DotpromptOptions } from "dotprompt";
-import { execSync } from "child_process";
 import type { Package } from "./package.js";
 import semver from "semver";
 import { readFileSync } from "fs";
 import { extname, join, resolve } from "path";
-import { readAny } from "./file-utils.js";
+import { shSync } from "./shell-utils.js";
 
 export function packageHelpers(
-  pkg: Package
+  pkg: Package,
 ): NonNullable<DotpromptOptions["helpers"]> {
   return {
     packageFile: (path: string): string => {
@@ -18,11 +17,18 @@ export function packageHelpers(
       try {
         const fileContents = readFileSync(absolutePath, "utf-8");
         const fileExt = extname(absolutePath).slice(1);
-        return `<file path="${absolutePath}">
-\`\`\`${fileExt}
+        return (
+          `<file path="${absolutePath}">
+` +
+          "```" +
+          fileExt +
+          `
 ${fileContents}
-\`\`\`
-</file>`;
+` +
+          "```" +
+          `
+</file>`
+        );
       } catch (e) {
         return `<file path="${absolutePath}" error="FILE_NOT_FOUND"/>`;
       }
@@ -33,11 +39,18 @@ ${fileContents}
           const absolutePath = resolve(dir, path);
           const fileContents = readFileSync(absolutePath, "utf-8");
           const fileExt = extname(absolutePath).slice(1);
-          return `<file path="${absolutePath}">
-\`\`\`${fileExt}
+          return (
+            `<file path="${absolutePath}">
+` +
+            "```" +
+            fileExt +
+            `
 ${fileContents}
-\`\`\`
-</file>`;
+` +
+            "```" +
+            `
+</file>`
+          );
         } catch (e) {
           // try next directory
         }
@@ -46,7 +59,7 @@ ${fileContents}
     },
     hasDependency: (packageName: string, range?: string): string => {
       const language = pkg.workspace.languages.find((l) =>
-        l.packages.find((p) => p.name === pkg.name)
+        l.packages.find((p) => p.name === pkg.name),
       );
       if (!language) {
         return "false";
@@ -61,25 +74,32 @@ ${fileContents}
       return "true";
     },
     runCommand: (command: string): string => {
-      try {
-        const commandOutput = execSync(command, {
-          encoding: "utf8",
-          stdio: "pipe",
-        });
-        return `<shell command="${command}" exit_code="0">
-\`\`\`
+      const result = shSync(command);
+      if (result.exitCode === 0) {
+        return (
+          `<shell command="${command}" exit_code="0">
+` +
+          "```" +
+          `
+${result.stdout.trim()}
+` +
+          "```" +
+          `
+</shell>`
+        );
+      } else {
+        const commandOutput = result.stdout || result.stderr || "";
+        return (
+          `<shell command="${command}" exit_code="${result.exitCode || 1}">
+` +
+          "```" +
+          `
 ${commandOutput.trim()}
-\`\`\`
-</shell>`;
-      } catch (e: any) {
-        const commandOutput =
-          e.stdout?.toString() || e.stderr?.toString() || "";
-        const exitCode = e.status || 1;
-        return `<shell command="${command}" exit_code="${exitCode}">
-\`\`\`
-${commandOutput.trim()}
-\`\`\`
-</shell>`;
+` +
+          "```" +
+          `
+</shell>`
+        );
       }
     },
     contains: (str: any, find: any) => {

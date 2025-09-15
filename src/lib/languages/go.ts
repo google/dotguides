@@ -1,8 +1,8 @@
-import { exec } from "child_process";
 import { readFile, stat } from "fs/promises";
 import { join } from "path";
 import type { LanguageAdapter, LanguageContext } from "../language-adapter.js";
 import { Package } from "../package.js";
+import { sh } from "../shell-utils.js";
 import type { Workspace } from "../workspace.js";
 
 export class GoLanguageAdapter implements LanguageAdapter {
@@ -43,18 +43,7 @@ export class GoLanguageAdapter implements LanguageAdapter {
       context.runtimeVersion = goVersionMatch[1];
     } else {
       try {
-        const { stdout } = await new Promise<{
-          stdout: string;
-          stderr: string;
-        }>((resolve, reject) => {
-          exec("go version", (error, stdout, stderr) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve({ stdout, stderr });
-            }
-          });
-        });
+        const { stdout } = await sh("go version");
         const versionMatch = stdout.match(/go version go([0-9.]+\S*)/);
         if (versionMatch && versionMatch[1]) {
           context.runtimeVersion = versionMatch[1];
@@ -65,22 +54,10 @@ export class GoLanguageAdapter implements LanguageAdapter {
     }
 
     try {
-      const { stdout } = await new Promise<{
-        stdout: string;
-        stderr: string;
-      }>((resolve, reject) => {
-        exec(
-          "go list -m -f '{{if not .Indirect}}{{.Path}} {{.Version}} {{.Dir}}{{end}}' all",
-          { cwd: directory },
-          (error, stdout, stderr) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve({ stdout, stderr });
-            }
-          }
-        );
-      });
+      const { stdout } = await sh(
+        "go list -m -f '{{if not .Indirect}}{{.Path}} {{.Version}} {{.Dir}}{{end}}' all",
+        { cwd: directory },
+      );
 
       const deps = stdout.trim().split("\n");
       for (const dep of deps) {
@@ -115,24 +92,11 @@ export class GoLanguageAdapter implements LanguageAdapter {
   async loadPackage(
     workspace: Workspace,
     directory: string,
-    name: string
+    name: string,
   ): Promise<Package> {
     try {
-      const { stdout: dir } = await new Promise<{
-        stdout: string;
-        stderr: string;
-      }>((resolve, reject) => {
-        exec(
-          `go list -f '{{.Dir}}' -m ${name}`,
-          { cwd: directory },
-          (error, stdout, stderr) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve({ stdout, stderr });
-            }
-          }
-        );
+      const { stdout: dir } = await sh(`go list -f '{{.Dir}}' -m ${name}`, {
+        cwd: directory,
       });
 
       const packageDir = dir.trim();

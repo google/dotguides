@@ -11,7 +11,7 @@
     "dist"
   ],
   "scripts": {
-    "test": "vitest",
+    "test": "pnpm run build && pnpm exec vitest",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "prepare": "npm run build"
