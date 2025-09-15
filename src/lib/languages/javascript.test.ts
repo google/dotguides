@@ -103,8 +103,8 @@ describe("JavascriptLanguageAdapter", () => {
       const context = await adapter.discover("/test/workspace");
 
       expect(context.packages).toHaveLength(3);
-      const sortedPackages = context.packages.sort((a, b) =>
-        a.name.localeCompare(b.name)
+      const sortedPackages = [...context.packages].sort((a, b) =>
+        a.name.localeCompare(b.name),
       );
 
       expect(sortedPackages).toEqual([
@@ -137,6 +137,49 @@ describe("JavascriptLanguageAdapter", () => {
         },
       ]);
     });
+
+    it("should sort packages by name and dependency order", async () => {
+      vol.fromJSON({
+        "/test/workspace/package.json": JSON.stringify({
+          dependencies: {
+            "react-markdown": "1.0.0",
+            react: "18.0.0",
+            "@scoped/pkg": "1.0.0",
+            "another-lib": "1.0.0",
+          },
+        }),
+        "/test/workspace/node_modules/react-markdown/package.json":
+          JSON.stringify({
+            version: "1.0.0",
+            dependencies: {
+              react: "18.0.0",
+            },
+          }),
+        "/test/workspace/node_modules/react/package.json": JSON.stringify({
+          version: "18.0.0",
+        }),
+        "/test/workspace/node_modules/@scoped/pkg/package.json": JSON.stringify(
+          {
+            version: "1.0.0",
+          },
+        ),
+        "/test/workspace/node_modules/another-lib/package.json": JSON.stringify(
+          {
+            version: "1.0.0",
+          },
+        ),
+      });
+
+      const adapter = new JavascriptLanguageAdapter();
+      const context = await adapter.discover("/test/workspace");
+
+      expect(context.packages.map((p) => p.name)).toEqual([
+        "another-lib",
+        "react",
+        "react-markdown",
+        "@scoped/pkg",
+      ]);
+    });
   });
 
   describe("loadPackage", () => {
@@ -153,7 +196,7 @@ describe("JavascriptLanguageAdapter", () => {
       const pkg = await adapter.loadPackage(
         workspace,
         "/test/workspace",
-        "package-a"
+        "package-a",
       );
       expect(pkg.name).toBe("package-a");
     });
@@ -172,7 +215,7 @@ describe("JavascriptLanguageAdapter", () => {
       const pkg = await adapter.loadPackage(
         workspace,
         "/test/workspace",
-        "package-b"
+        "package-b",
       );
       expect(pkg.name).toBe("package-b");
     });

@@ -1,13 +1,86 @@
 import { join } from "path";
 import { stat } from "fs/promises";
 import { Package } from "../package.js";
-import type { LanguageAdapter, LanguageContext } from "../language-adapter.js";
+import type {
+  LanguageAdapter,
+  LanguageContext,
+  PackageInfo,
+} from "../language-adapter.js";
 import { existsAny, readAny } from "../file-utils.js";
 import type { Workspace } from "../workspace.js";
 import { cachedFetch } from "../cached-fetch.js";
 
 const normalize = (pkg: string) =>
   pkg.startsWith("@") ? pkg.substring(1).replace("/", "__") : pkg;
+
+const sortPackages = (
+  packages: (PackageInfo & { deps: string[] })[],
+): PackageInfo[] => {
+  const packageMap = new Map(packages.map((p) => [p.name, p]));
+  const inDegree = new Map<string, number>();
+  const adj = new Map<string, string[]>();
+
+  for (const pkg of packages) {
+    inDegree.set(pkg.name, 0);
+    adj.set(pkg.name, []);
+  }
+
+  for (const pkg of packages) {
+    for (const depName of pkg.deps) {
+      if (packageMap.has(depName)) {
+        // pkg depends on depName, so edge from depName -> pkg
+        adj.get(depName)!.push(pkg.name);
+        inDegree.set(pkg.name, (inDegree.get(pkg.name) || 0) + 1);
+      }
+    }
+  }
+
+  const queue: string[] = [];
+  for (const pkg of packages) {
+    if (inDegree.get(pkg.name) === 0) {
+      queue.push(pkg.name);
+    }
+  }
+
+  const normalizeName = (name: string) =>
+    name.startsWith("@") ? name.substring(1) : name;
+  const compareNames = (a: string, b: string) =>
+    normalizeName(a).localeCompare(normalizeName(b));
+
+  queue.sort(compareNames);
+
+  const sorted: PackageInfo[] = [];
+  while (queue.length > 0) {
+    const pkgName = queue.shift()!;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { deps, ...pkgInfo } = packageMap.get(pkgName)!;
+    sorted.push(pkgInfo);
+
+    const dependents = adj.get(pkgName) || [];
+    dependents.sort(compareNames);
+
+    for (const dependentName of dependents) {
+      inDegree.set(dependentName, inDegree.get(dependentName)! - 1);
+      if (inDegree.get(dependentName) === 0) {
+        queue.push(dependentName);
+      }
+    }
+    queue.sort(compareNames);
+  }
+
+  if (sorted.length < packages.length) {
+    const remaining = packages
+      .filter((p) => !sorted.find((sp) => sp.name === p.name))
+      .sort((a, b) => compareNames(a.name, b.name));
+    for (const pkg of remaining) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { deps, ...pkgInfo } = pkg;
+      sorted.push(pkgInfo);
+    }
+  }
+
+  return sorted;
+};
 
 export class JavascriptLanguageAdapter implements LanguageAdapter {
   async discover(directory: string): Promise<LanguageContext> {
@@ -45,7 +118,7 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
       "pnpm-lock.yaml",
       "yarn.lock",
       "package-lock.json",
-      "bun.lockb"
+      "bun.lockb",
     );
 
     if (packageLock) {
@@ -65,7 +138,7 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
       "bun.lockb",
       "deno.json",
       ".nvmrc",
-      ".node-version"
+      ".node-version",
     );
 
     if (runtimeFile) {
@@ -95,39 +168,46 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
       ...optionalDependencies,
     };
 
+    const packagesWithDeps: (PackageInfo & { deps: string[] })[] = [];
+
     for (const name in allDeps) {
       const packagePath = join(directory, "node_modules", name);
       const guidesDir = join(packagePath, ".guides");
       const contribPackagePath = join(
         directory,
         "node_modules",
-        `@dotguides-contrib/${normalize(name)}`
+        `@dotguides-contrib/${normalize(name)}`,
       );
       const hasGuides = !!(await existsAny(
         null,
         guidesDir,
-        contribPackagePath
+        contribPackagePath,
       ));
 
       const dependencyVersion = allDeps[name];
       let packageVersion = dependencyVersion;
+      let deps: string[] = [];
 
       const installedPackageJsonContent = await readAny(
         packagePath,
-        "package.json"
+        "package.json",
       );
       if (installedPackageJsonContent) {
         try {
           const installedPackageJson = JSON.parse(
-            installedPackageJsonContent.content
+            installedPackageJsonContent.content,
           );
           packageVersion = installedPackageJson.version;
+          deps = [
+            ...Object.keys(installedPackageJson.dependencies || {}),
+            ...Object.keys(installedPackageJson.peerDependencies || {}),
+          ];
         } catch (e) {
           // ignore
         }
       }
 
-      context.packages.push({
+      packagesWithDeps.push({
         name,
         dir: packagePath,
         dependencyVersion,
@@ -135,8 +215,11 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
         guides: hasGuides,
         development: name in devDependencies,
         optional: name in optionalDependencies,
+        deps,
       });
     }
+
+    context.packages = sortPackages(packagesWithDeps);
 
     return context;
   }
@@ -144,7 +227,7 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
   async loadPackage(
     workspace: Workspace,
     directory: string,
-    name: string
+    name: string,
   ): Promise<Package> {
     const packagePath = join(directory, "node_modules", name);
     const guidesDir = join(packagePath, ".guides");
@@ -154,7 +237,7 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
     const contribPackagePath = join(
       directory,
       "node_modules",
-      `@dotguides-contrib/${contribPackageName}`
+      `@dotguides-contrib/${contribPackageName}`,
     );
 
     const pkgPath = await existsAny(null, guidesDir, contribPackagePath);
@@ -163,7 +246,7 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
     }
 
     throw new Error(
-      `Could not find guides for dependency package '${name}' in directory '${directory}'`
+      `Could not find guides for dependency package '${name}' in directory '${directory}'`,
     );
   }
 
@@ -187,7 +270,7 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
 
     const promises = packages.map(async (pkg) => {
       const url = `https://registry.npmjs.org/@dotguides-contrib/${normalize(
-        pkg
+        pkg,
       )}`;
       try {
         const res = await cachedFetch(url, { method: "HEAD" });
