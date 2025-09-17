@@ -1,9 +1,37 @@
 import { Workspace } from "../../lib/workspace.js";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile, readFile } from "fs/promises";
 import { join } from "path";
 
 export async function upCommand(): Promise<void> {
   const workspace = await Workspace.load([process.cwd()]);
+
+  const instructions = await workspace.systemInstructions({ listDocs: true });
+  await writeFile(join(process.cwd(), "DOTGUIDES.md"), instructions);
+
+  const geminiDir = join(process.cwd(), ".gemini");
+  await mkdir(geminiDir, { recursive: true });
+  const settingsPath = join(geminiDir, "settings.json");
+
+  let settings: any = {};
+  try {
+    settings = JSON.parse(await readFile(settingsPath, "utf-8"));
+  } catch (e) {
+    // file doesn't exist or is invalid json, start with empty settings
+  }
+
+  settings.context ??= {};
+  if (!settings.context.filename) {
+    settings.context.filename = ["GEMINI.md", "DOTGUIDES.md"];
+  } else {
+    const filenames = Array.isArray(settings.context.filename)
+      ? settings.context.filename
+      : [settings.context.filename];
+    if (!filenames.includes("DOTGUIDES.md")) {
+      filenames.push("DOTGUIDES.md");
+    }
+    settings.context.filename = filenames;
+  }
+
   const mcpServers: { [key: string]: any } = {
     dotguides: {
       command: "dotguides",
@@ -19,30 +47,16 @@ export async function upCommand(): Promise<void> {
     }
   }
 
-  const extensionConfig = {
-    name: "dotguides",
-    version: "0.0.1",
-    mcpServers,
-    contextFileName: "GEMINI.md",
-  };
+  settings.mcpServers ??= {};
+  for (const serverName in mcpServers) {
+    if (!settings.mcpServers[serverName]) {
+      settings.mcpServers[serverName] = mcpServers[serverName];
+    }
+  }
 
-  const extensionDir = join(
-    process.cwd(),
-    ".gemini",
-    "extensions",
-    "dotguides"
-  );
-  await mkdir(extensionDir, { recursive: true });
-
-  await writeFile(
-    join(extensionDir, "gemini-extension.json"),
-    JSON.stringify(extensionConfig, null, 2)
-  );
-
-  const instructions = await workspace.systemInstructions({ listDocs: true });
-  await writeFile(join(extensionDir, "GEMINI.md"), instructions);
+  await writeFile(settingsPath, JSON.stringify(settings, null, 2));
 
   console.log(
-    "Dotguides bootstrapped for Gemini CLI. You can now run `gemini`."
+    "Dotguides bootstrapped for Gemini CLI. You can now run `gemini`.",
   );
 }
