@@ -15,3 +15,5 @@
 - [ ] Support `~/.guides/aliases.json` for some kind of custom aliasing (e.g. load guidance for `foo` package from `my-custom-foo-guides` package).
 - [ ] When reading a doc with children (e.g. reading `docs:mypackage:foo` when `docs:mypackage:foo/bar` exists), automatically list child docs at the end of the content.
 - [ ] Implement examples -- pull code snippets and have frontmatter able to be defined in top-of-file comment blocks
+- [ ] Make `dotguides up` interactive where you can choose which packages you want to activate, toggle MCP servers on and off, etc. Store that configuration in `.guides/settings.json`.
+- [ ] Make `dotguides up` compatible with Claude Code, Cursor, Copilot, and Codex.

@@ -20,16 +20,16 @@ export async function upCommand(): Promise<void> {
   }
 
   settings.context ??= {};
-  if (!settings.context.filename) {
-    settings.context.filename = ["GEMINI.md", "DOTGUIDES.md"];
+  if (!settings.context.fileName) {
+    settings.context.fileName = ["GEMINI.md", "DOTGUIDES.md"];
   } else {
-    const filenames = Array.isArray(settings.context.filename)
-      ? settings.context.filename
-      : [settings.context.filename];
+    const filenames = Array.isArray(settings.context.fileName)
+      ? settings.context.fileName
+      : [settings.context.fileName];
     if (!filenames.includes("DOTGUIDES.md")) {
       filenames.push("DOTGUIDES.md");
     }
-    settings.context.filename = filenames;
+    settings.context.fileName = filenames;
   }
 
   const mcpServers: { [key: string]: any } = {
