@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if ((EUID == 0)); then
+  echo "Please do not run as root"
+  exit 1
+fi
+
+TOP_DIR=$(git rev-parse --show-toplevel)
+
+if ! command -v addlicense &>/dev/null; then
+  if ! command -v go &>/dev/null; then
+    echo "Please install go"
+    exit 1
+  fi
+  echo "Installing addlicense..."
+  go install github.com/google/addlicense@HEAD
+fi
+
+export PATH=$(go env GOPATH):$PATH
+
+# NOTE: If you edit the ignore patterns, make sure to update the ignore patterns
+# in the corresponding add_license script.
+addlicense \
+  -c "Google LLC" \
+  -s \
+  -l apache \
+  -ignore '**/.dist/**/*' \
+  -ignore '**/.eggs/**/*' \
+  -ignore '**/.idea/**/*' \
+  -ignore '**/.mypy_cache/**/*' \
+  -ignore '**/.next/**/*' \
+  -ignore '**/.nox/**/*' \
+  -ignore '**/.output/**/*' \
+  -ignore '**/.pytest_cache/**/*' \
+  -ignore '**/.ruff_cache/**/*' \
+  -ignore '**/.tox/**/*' \
+  -ignore '**/.venv/**/*' \
+  -ignore '**/.wxt/**/*' \
+  -ignore '**/__pycache__/**/*' \
+  -ignore '**/bazel-*/**/*' \
+  -ignore '**/coverage/**/*' \
+  -ignore '**/develop-eggs/**/*' \
+  -ignore '**/dist/**/*' \
+  -ignore '**/node_modules/**/*' \
+  -ignore '**/pnpm-lock.yaml' \
+  -ignore '**/site/**/*' \
+  -ignore '**/target/**/*' \
+  -ignore '.nx/**/*' \
+  -ignore '.trunk/**/*' \
+  "$TOP_DIR"
