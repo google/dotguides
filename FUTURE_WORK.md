@@ -17,3 +17,5 @@
 - [ ] Implement examples -- pull code snippets and have frontmatter able to be defined in top-of-file comment blocks
 - [ ] Make `dotguides up` interactive where you can choose which packages you want to activate, toggle MCP servers on and off, etc. Store that configuration in `.guides/settings.json`.
 - [ ] Make `dotguides up` compatible with Claude Code, Cursor, Copilot, and Codex.
+- [ ] Come up with a way to add dotguides guidance from websites, like having a `/.well-known/.guides/config.json` file or something. MUST have a `config.json` and all content must be explicitly declared in the config file.
+- [ ] Have `dotguides mcp --author` that starts an MCP server in a special "author" mode that can help authors inspect and test out their content.
