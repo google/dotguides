@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { readFile } from "fs/promises";
@@ -38,14 +36,14 @@ export async function checkCommand() {
         pkg = await Package.load(
           workspace,
           context.workspacePackage.name,
-          guidesDir
+          guidesDir,
         );
         workspace.packageMap[pkg.name] = pkg;
       }
     }
   } else {
     console.error(
-      `Could not determine language for directory ${loadPath}. No dotguides-compatible language detected.`
+      `Could not determine language for directory ${loadPath}. No dotguides-compatible language detected.`,
     );
     process.exit(1);
   }
@@ -65,7 +63,7 @@ export async function checkCommand() {
       const content = await guide.render();
       const tokens = countTokens(content);
       console.log(
-        `    - ${guide.config.name} (~${formatTokenCount(tokens)} tokens)`
+        `    - ${guide.config.name} (~${formatTokenCount(tokens)} tokens)`,
       );
     }
   }
@@ -78,11 +76,11 @@ export async function checkCommand() {
     }
     console.log(
       `  Docs: ${pkg.docs.length} discovered (~${formatTokenCount(
-        totalTokens
-      )} tokens)`
+        totalTokens,
+      )} tokens)`,
     );
     const topLevelDocs = pkg.docs.filter(
-      (doc) => !doc.config.name.includes("/")
+      (doc) => !doc.config.name.includes("/"),
     );
     for (const doc of topLevelDocs) {
       let line = `    - ${doc.config.name}`;

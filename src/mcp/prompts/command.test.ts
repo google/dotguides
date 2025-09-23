@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -59,7 +57,7 @@ describe("commandToPrompt", () => {
         dependencyVersion: "1.0.0",
         language: { name: "javascript" },
       },
-      { arg1: "value1" }
+      { arg1: "value1" },
     );
     expect(result).toEqual({
       messages: [

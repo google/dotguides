@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { Dotprompt, type ParsedPrompt } from "dotprompt";
@@ -37,7 +35,7 @@ export class PromptFile implements ContentFile {
   private constructor(
     pkg: Package,
     source: ContentFileSource,
-    sourceText: string
+    sourceText: string,
   ) {
     this.source = source;
     this.sourceText = sourceText;
@@ -52,7 +50,7 @@ export class PromptFile implements ContentFile {
 
   static async load(
     pkg: Package,
-    source: ContentFileSource
+    source: ContentFileSource,
   ): Promise<PromptFile> {
     const sourceText = await loadContentFileText(pkg.guidesDir, source);
     return new PromptFile(pkg, source, sourceText);
@@ -60,7 +58,7 @@ export class PromptFile implements ContentFile {
 
   async render(
     context: RenderContext,
-    args?: Record<string, any>
+    args?: Record<string, any>,
   ): Promise<ContentBlock[]> {
     const result = await this.dotprompt.render(this.sourceText, {
       context: { ...this.pkg.renderContext(), ...context },
@@ -109,7 +107,7 @@ export class PromptFile implements ContentFile {
                 .join("\n")
                 .trim();
               return `\n<doc uri="${docUri}" title="${doc.title}">\n${content}\n</doc>\n`;
-            })
+            }),
           );
         } else {
           segments.push(`\n<doc uri="${docUri}" error="NOT_FOUND" />\n`);

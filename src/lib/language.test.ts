@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, it, expect } from "vitest";
@@ -23,7 +21,7 @@ import { join } from "path";
 describe("detectLanguage", () => {
   it("should detect javascript", async () => {
     const [adapter, context] = await detectLanguage(
-      join(process.cwd(), "testing/dart/loudify")
+      join(process.cwd(), "testing/dart/loudify"),
     );
     expect(adapter?.constructor.name).toBe("DartLanguageAdapter");
     expect(context?.name).toBe("dart");

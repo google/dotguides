@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -46,7 +44,7 @@ describe("PromptFile", () => {
     const pkg = new Package(
       mockWorkspace,
       "test-pkg",
-      "/test/workspace/node_modules/test-pkg/.guides"
+      "/test/workspace/node_modules/test-pkg/.guides",
     );
     pkg.packageVersion = "1.0.0";
     pkg.dependencyVersion = "1.0.0";
@@ -65,7 +63,7 @@ describe("PromptFile", () => {
     const promptFile = new (PromptFile as any)(
       pkg,
       { path: "test.prompt" },
-      `Hello {{ embedDoc "test-doc" }}`
+      `Hello {{ embedDoc "test-doc" }}`,
     );
 
     const renderContext = pkg.renderContext();
@@ -73,7 +71,7 @@ describe("PromptFile", () => {
 
     expect(docRender).toHaveBeenCalledWith(renderContext);
     expect(rendered[0].text).toContain(
-      `<doc uri="docs:test-pkg:test-doc" title="Test Doc">`
+      `<doc uri="docs:test-pkg:test-doc" title="Test Doc">`,
     );
     expect(rendered[0].text).toContain("rendered doc");
   });
@@ -100,7 +98,7 @@ describe("PromptFile", () => {
     const pkg = new Package(
       mockWorkspace,
       "test-pkg",
-      "/test/workspace/node_modules/test-pkg/.guides"
+      "/test/workspace/node_modules/test-pkg/.guides",
     );
     pkg.packageVersion = "1.0.0";
     pkg.dependencyVersion = "1.0.0";
@@ -128,7 +126,7 @@ describe("PromptFile", () => {
     const promptFile = new (PromptFile as any)(
       pkg,
       { path: "test.prompt" },
-      `Hello {{ embedDoc "test-doc-1" }} and {{ embedDoc "test-doc-2" }}`
+      `Hello {{ embedDoc "test-doc-1" }} and {{ embedDoc "test-doc-2" }}`,
     );
 
     const renderContext = pkg.renderContext();
@@ -139,11 +137,11 @@ describe("PromptFile", () => {
 
     const text = rendered[0].text || "";
     expect(text).toContain(
-      `<doc uri="docs:test-pkg:test-doc-1" title="Test Doc 1">`
+      `<doc uri="docs:test-pkg:test-doc-1" title="Test Doc 1">`,
     );
     expect(text).toContain("rendered doc 1");
     expect(text).toContain(
-      `<doc uri="docs:test-pkg:test-doc-2" title="Test Doc 2">`
+      `<doc uri="docs:test-pkg:test-doc-2" title="Test Doc 2">`,
     );
     expect(text).toContain("rendered doc 2");
   });

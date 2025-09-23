@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { loadContentFile, type ContentFile } from "./content-file.js";
@@ -26,7 +24,7 @@ type ContentFileSource = { path: string } | { url: string };
 export class Guide {
   private constructor(
     public contentFile: ContentFile,
-    public config: GuideConfig
+    public config: GuideConfig,
   ) {}
 
   static async load(pkg: Package, config: GuideConfig): Promise<Guide> {

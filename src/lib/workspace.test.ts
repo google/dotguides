@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -107,14 +105,14 @@ describe("Workspace", () => {
         return Promise.resolve(
           new Response("content for doc1", {
             headers: { "Content-Type": "text/markdown" },
-          })
+          }),
         );
       }
       if (url.toString() === "https://example.com/doc2.md") {
         return Promise.resolve(
           new Response("content for doc2", {
             headers: { "Content-Type": "text/markdown" },
-          })
+          }),
         );
       }
       return Promise.resolve(new Response("not found", { status: 404 }));

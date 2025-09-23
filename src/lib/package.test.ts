@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -64,7 +62,7 @@ describe("Package", () => {
     const pkg = await Package.load(
       workspace,
       "test-package",
-      "/test/package/.guides"
+      "/test/package/.guides",
     );
 
     const setupGuide = pkg.guides.find((g) => g.config.name === "setup");
@@ -96,7 +94,7 @@ describe("Package", () => {
     const pkg = await Package.load(
       workspace,
       "test-package",
-      "/test/package/.guides"
+      "/test/package/.guides",
     );
 
     expect(pkg.docs.length).toBe(2);
@@ -137,7 +135,7 @@ describe("Package", () => {
     const pkg = await Package.load(
       workspace,
       "test-package",
-      "/test/package/.guides"
+      "/test/package/.guides",
     );
 
     expect(pkg.docs.length).toBe(1);
@@ -176,7 +174,7 @@ describe("Package", () => {
       const pkg = await Package.load(
         workspace,
         "test-package",
-        "/test/package/.guides"
+        "/test/package/.guides",
       );
 
       expect(pkg.commands.length).toBe(2);
@@ -219,7 +217,7 @@ describe("Package", () => {
       const pkg = await Package.load(
         workspace,
         "test-package",
-        "/test/package/.guides"
+        "/test/package/.guides",
       );
 
       expect(pkg.commands.length).toBe(2);
@@ -260,7 +258,7 @@ describe("Package", () => {
       const pkg = await Package.load(
         workspace,
         "test-package",
-        "/test/package/.guides"
+        "/test/package/.guides",
       );
 
       expect(pkg.commands.length).toBe(1);

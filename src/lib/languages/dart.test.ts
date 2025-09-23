@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -315,7 +313,7 @@ environment:
 dependencies:
   http: ^0.13.5
   json_annotation: ^4.8.1
-  
+
 dev_dependencies:
   build_runner: ^2.4.6
   json_serializable: ^6.7.1
@@ -469,10 +467,10 @@ packages:
           expect(context.runtimeVersion).toBe(expected.runtimeVersion);
         }
         const sortedPackages = context.packages.sort((a, b) =>
-          a.name.localeCompare(b.name)
+          a.name.localeCompare(b.name),
         );
         const sortedExpectedPackages = expected.packages.sort((a, b) =>
-          a.name.localeCompare(b.name)
+          a.name.localeCompare(b.name),
         );
         expect(sortedPackages).toEqual(sortedExpectedPackages);
         expect(context.workspacePackage).toEqual(expected.workspacePackage);
@@ -512,7 +510,7 @@ packages:
       const pkg = await adapter.loadPackage(
         workspace,
         "/test/workspace",
-        "http"
+        "http",
       );
       expect(pkg.name).toBe("http");
     });
@@ -542,7 +540,7 @@ packages:
       const pkg = await adapter.loadPackage(
         workspace,
         "/test/workspace",
-        "dio"
+        "dio",
       );
       expect(pkg.name).toBe("dio");
     });
@@ -557,9 +555,9 @@ packages:
       } as unknown as Workspace;
 
       await expect(
-        adapter.loadPackage(workspace, "/test/workspace", "nonexistent")
+        adapter.loadPackage(workspace, "/test/workspace", "nonexistent"),
       ).rejects.toThrow(
-        "Package nonexistent not found in .dart_tool/package_config.json"
+        "Package nonexistent not found in .dart_tool/package_config.json",
       );
     });
 
@@ -587,7 +585,7 @@ packages:
       const pkg = await adapter.loadPackage(
         workspace,
         "/test/workspace",
-        "loudify"
+        "loudify",
       );
       expect(pkg.name).toBe("loudify");
     });
@@ -614,9 +612,9 @@ packages:
       } as unknown as Workspace;
 
       await expect(
-        adapter.loadPackage(workspace, "/test/workspace", "nonexistent")
+        adapter.loadPackage(workspace, "/test/workspace", "nonexistent"),
       ).rejects.toThrow(
-        "Package nonexistent not found in .dart_tool/package_config.json"
+        "Package nonexistent not found in .dart_tool/package_config.json",
       );
     });
   });

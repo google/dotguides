@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
@@ -106,7 +104,7 @@ describe("cachedFetch", () => {
         expect(mockedFs.writeFile).toHaveBeenCalledTimes(1);
 
         const writtenData = JSON.parse(
-          mockedFs.writeFile.mock.calls[0]?.[1] as string
+          mockedFs.writeFile.mock.calls[0]?.[1] as string,
         );
 
         expect(writtenData.body).toBe(responseBody);
@@ -114,7 +112,7 @@ describe("cachedFetch", () => {
         expect(result.status).toBe(200);
         const resultBody = await result.text();
         expect(resultBody).toBe(responseBody);
-      }
+      },
     );
   });
 
@@ -171,7 +169,7 @@ describe("cachedFetch", () => {
       expect(mockedFetch).toHaveBeenCalledTimes(1);
       expect(mockedFs.writeFile).toHaveBeenCalledTimes(1);
       const writtenData = JSON.parse(
-        mockedFs.writeFile.mock.calls[0]?.[1] as string
+        mockedFs.writeFile.mock.calls[0]?.[1] as string,
       );
       expect(writtenData.body).toBe(freshBody);
     });
@@ -219,7 +217,7 @@ describe("cachedFetch", () => {
     mockedFetch.mockRejectedValue(new Error("Network error"));
 
     await expect(
-      cachedFetch("https://example.com/no-cache-error")
+      cachedFetch("https://example.com/no-cache-error"),
     ).rejects.toThrow("Network error");
   });
 });

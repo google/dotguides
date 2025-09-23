@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { DartLanguageAdapter } from "./languages/dart.js";
@@ -28,7 +26,7 @@ export const allLanguages: LanguageAdapter[] = [
 ];
 
 export async function detectLanguage(
-  directory: string
+  directory: string,
 ): Promise<[LanguageAdapter, LanguageContext] | [null, null]> {
   for (const adapter of allLanguages) {
     const context = await adapter.discover(directory);

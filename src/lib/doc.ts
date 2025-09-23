@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import {
@@ -28,7 +26,7 @@ import type { Package } from "./package.js";
 export class Doc {
   private constructor(
     public contentFile: ContentFile,
-    public config: ContentConfig
+    public config: ContentConfig,
   ) {}
 
   static async load(pkg: Package, config: ContentConfig): Promise<Doc> {

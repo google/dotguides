@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
@@ -115,7 +113,7 @@ export class DotguidesMcp {
     const t = TOOLS.find((t) => t.mcp.name === request.params.name);
     if (!t)
       throw new InvalidRequestError(
-        `Tool '${request.params.name}' was not found.`
+        `Tool '${request.params.name}' was not found.`,
       );
     return t.fn(request.params.arguments || ({} as any), {
       workspace: this.workspace,
@@ -123,7 +121,7 @@ export class DotguidesMcp {
   }
 
   async listResources(
-    request: ListResourcesRequest
+    request: ListResourcesRequest,
   ): Promise<ListResourcesResult> {
     const resources: ListResourcesResult["resources"] = [];
     for (const pkg of this.workspace.packages) {
@@ -143,7 +141,7 @@ export class DotguidesMcp {
   }
 
   async readResource(
-    request: ReadResourceRequest
+    request: ReadResourceRequest,
   ): Promise<ReadResourceResult> {
     if (request.params.uri.startsWith("docs:")) {
       return this.readDoc(request.params.uri);
@@ -157,14 +155,14 @@ export class DotguidesMcp {
     const [_, pkg, name] = uri.split(":");
     if (!pkg || !name)
       throw new InvalidRequestError(
-        `Docs URIs must be in doc:<package>:<name> format.`
+        `Docs URIs must be in doc:<package>:<name> format.`,
       );
     if (!this.workspace.packageMap[pkg])
       throw new InvalidRequestError(`Package '${pkg}' not found in workspace.`);
     const doc = this.workspace.packageMap[pkg].doc(name);
     if (!doc)
       throw new InvalidRequestError(
-        `Doc '${name}' not found for package '${pkg}'.`
+        `Doc '${name}' not found for package '${pkg}'.`,
       );
     const content = await doc.content;
     return {
@@ -192,7 +190,7 @@ export class DotguidesMcp {
 
   async getPrompt(request: GetPromptRequest): Promise<GetPromptResult> {
     const staticPrompt = PROMPTS.find(
-      (p) => p.mcp.name === request.params.name
+      (p) => p.mcp.name === request.params.name,
     );
     if (staticPrompt) {
       return staticPrompt.fn(request.params.arguments || {}, {
@@ -203,19 +201,19 @@ export class DotguidesMcp {
     const [pkgName, commandName] = request.params.name.split(":");
     if (!pkgName || !commandName) {
       throw new InvalidRequestError(
-        `Prompt '${request.params.name}' was not found.`
+        `Prompt '${request.params.name}' was not found.`,
       );
     }
     const pkg = this.workspace.packageMap[pkgName];
     if (!pkg) {
       throw new InvalidRequestError(
-        `Package '${pkgName}' not found for prompt '${request.params.name}'.`
+        `Package '${pkgName}' not found for prompt '${request.params.name}'.`,
       );
     }
     const command = pkg.commands.find((c) => c.config.name === commandName);
     if (!command) {
       throw new InvalidRequestError(
-        `Command '${commandName}' not found for package '${pkgName}'.`
+        `Command '${commandName}' not found for package '${pkgName}'.`,
       );
     }
     const prompt = commandToPrompt(pkg, command);

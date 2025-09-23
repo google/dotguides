@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -45,7 +43,7 @@ describe("setup prompt", () => {
 
     const result = await setup.fn(
       { package: "test-pkg" },
-      { workspace: mockWorkspace }
+      { workspace: mockWorkspace },
     );
 
     expect(result.messages).toHaveLength(1);
@@ -59,7 +57,7 @@ describe("setup prompt", () => {
     } as unknown as Workspace;
 
     await expect(
-      setup.fn({ package: "" }, { workspace: mockWorkspace })
+      setup.fn({ package: "" }, { workspace: mockWorkspace }),
     ).rejects.toThrow(InvalidRequestError);
   });
 
@@ -69,7 +67,7 @@ describe("setup prompt", () => {
     } as unknown as Workspace;
 
     await expect(
-      setup.fn({ package: "not-found" }, { workspace: mockWorkspace })
+      setup.fn({ package: "not-found" }, { workspace: mockWorkspace }),
     ).rejects.toThrow(InvalidRequestError);
   });
 
@@ -83,7 +81,7 @@ describe("setup prompt", () => {
     } as unknown as Workspace;
 
     await expect(
-      setup.fn({ package: "test-pkg" }, { workspace: mockWorkspace })
+      setup.fn({ package: "test-pkg" }, { workspace: mockWorkspace }),
     ).rejects.toThrow(InvalidRequestError);
   });
 });

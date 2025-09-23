@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { readdir, stat } from "fs/promises";
@@ -47,14 +45,14 @@ export class Package {
   constructor(
     public workspace: Workspace,
     public name: string,
-    public guidesDir: string
+    public guidesDir: string,
   ) {
     this.dotprompt = new Dotprompt({
       partialResolver(partialName) {
         const partialPath = join(
           guidesDir,
           "partials",
-          `${partialName}.prompt`
+          `${partialName}.prompt`,
         );
         try {
           return readFileSync(partialPath, { encoding: "utf8" }) || " ";
@@ -69,7 +67,7 @@ export class Package {
   static async load(
     workspace: Workspace,
     name: string,
-    guidesDir: string
+    guidesDir: string,
   ): Promise<Package> {
     const pkg = new Package(workspace, name, guidesDir);
     await pkg._load();
@@ -78,7 +76,7 @@ export class Package {
 
   private async _load(): Promise<void> {
     const language = this.workspace.languages.find((l) =>
-      l.packages.find((p) => p.name === this.name)
+      l.packages.find((p) => p.name === this.name),
     );
     if (language) {
       const packageInfo = language.packages.find((p) => p.name === this.name);
@@ -94,7 +92,7 @@ export class Package {
         this.config = JSON.parse(guidesJson.content);
       } catch (e) {
         console.error(
-          `Unable to parse '${resolve(this.guidesDir, "config.js")}': ${e}`
+          `Unable to parse '${resolve(this.guidesDir, "config.js")}': ${e}`,
         );
       }
     }
@@ -112,7 +110,7 @@ export class Package {
         const discoveredGuide = await existsAny(
           this.guidesDir,
           `${builtin}.md`,
-          `${builtin}.prompt`
+          `${builtin}.prompt`,
         );
         if (!discoveredGuide) return null;
         return Guide.load(this, { name: builtin, path: discoveredGuide });
@@ -126,7 +124,7 @@ export class Package {
     const discoveredDocConfigsPromise = this._getDocsFromDir(
       docsDir,
       docsDir,
-      docNamesFromConfig
+      docNamesFromConfig,
     );
 
     const configuredDocConfigs = docsConfig;
@@ -177,7 +175,7 @@ export class Package {
   private async _getDocsFromDir(
     dir: string,
     baseDir: string,
-    docNamesFromConfig: Set<string>
+    docNamesFromConfig: Set<string>,
   ): Promise<ContentConfig[]> {
     if (!(await stat(dir).catch(() => false))) {
       return [];
@@ -198,7 +196,7 @@ export class Package {
           const relativePath = relative(baseDir, fullPath);
           const name = join(
             parse(relativePath).dir,
-            parse(relativePath).name
+            parse(relativePath).name,
           ).replace(/\\/g, "/");
 
           if (docNamesFromConfig.has(name)) {
@@ -208,7 +206,7 @@ export class Package {
           return { name, path: resolve(baseDir, fullPath), description: "" };
         }
         return null;
-      }
+      },
     );
 
     return (await Promise.all(promises))
@@ -222,11 +220,11 @@ export class Package {
 
   renderContext(hints?: RenderContext["hints"]): RenderContext {
     const language = this.workspace.languages.find((l) =>
-      l.packages.find((p) => p.name === this.name)
+      l.packages.find((p) => p.name === this.name),
     );
     if (!language) {
       throw new Error(
-        `Could not find language context for package ${this.name}`
+        `Could not find language context for package ${this.name}`,
       );
     }
     if (!this.workspace.directories[0]) {
@@ -237,7 +235,7 @@ export class Package {
     }
     if (!this.dependencyVersion) {
       throw new Error(
-        `Could not determine dependency version for ${this.name}`
+        `Could not determine dependency version for ${this.name}`,
       );
     }
     const context: RenderContext = {

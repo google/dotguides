@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { load } from "js-yaml";
@@ -35,7 +33,7 @@ export class MarkdownFile implements ContentFile {
   private constructor(
     public source: ContentFileSource,
     pkg: Package,
-    content: string
+    content: string,
   ) {
     this.pkg = pkg;
     const match = content.match(/^\s*---\r?\n(.*?)\r?\n---\r?\n/s);
@@ -55,7 +53,7 @@ export class MarkdownFile implements ContentFile {
 
   static async load(
     pkg: Package,
-    source: ContentFileSource
+    source: ContentFileSource,
   ): Promise<MarkdownFile> {
     const content = await loadContentFileText(pkg.guidesDir, source);
     const finalSource = { ...source };
@@ -67,7 +65,7 @@ export class MarkdownFile implements ContentFile {
 
   async render(
     context: RenderContext,
-    args?: Record<string, any>
+    args?: Record<string, any>,
   ): Promise<ContentBlock[]> {
     if (args)
       throw new Error("Markdown files can't be rendered with arguments.");

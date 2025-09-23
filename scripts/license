@@ -24,8 +24,8 @@ export PATH=$(go env GOPATH):$PATH
 # in the corresponding add_license script.
 addlicense \
   -c "Google LLC" \
-  -s \
   -l apache \
+  -v \
   -ignore '**/.dist/**/*' \
   -ignore '**/.eggs/**/*' \
   -ignore '**/.idea/**/*' \

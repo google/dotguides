@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
@@ -23,7 +21,7 @@ import type { Workspace } from "../lib/workspace.js";
 
 export type ToolFn<I> = (
   input: z.infer<I>,
-  context: { workspace: Workspace }
+  context: { workspace: Workspace },
 ) => Promise<CallToolResult> | CallToolResult;
 
 export function tool<I extends z.ZodType>(
@@ -33,7 +31,7 @@ export function tool<I extends z.ZodType>(
     description?: string;
     inputSchema: I;
   },
-  fn: ToolFn<I>
+  fn: ToolFn<I>,
 ): {
   fn: ToolFn<I>;
   mcp: Tool;

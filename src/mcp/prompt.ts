@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import type {
@@ -25,7 +23,7 @@ import type { Workspace } from "../lib/workspace.js";
 
 export type PromptFn = (
   args: Record<string, string>,
-  context: { workspace: Workspace }
+  context: { workspace: Workspace },
 ) => Promise<GetPromptResult> | GetPromptResult;
 
 export function prompt(
@@ -35,7 +33,7 @@ export function prompt(
     description?: string;
     arguments: PromptArgument[];
   },
-  fn: PromptFn
+  fn: PromptFn,
 ): {
   fn: PromptFn;
   mcp: Prompt;

@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import type {
@@ -29,13 +27,13 @@ type ContentFileSource = { path: string } | { url: string };
 export class Command {
   private constructor(
     public contentFile: ContentFile,
-    public config: CommandConfig
+    public config: CommandConfig,
   ) {}
 
   static async load(
     pkg: Package,
     source: ContentFileSource,
-    config: CommandConfig
+    config: CommandConfig,
   ): Promise<Command> {
     const contentFile = await loadContentFile(pkg, source);
     return new Command(contentFile, config);
@@ -55,7 +53,7 @@ export class Command {
 
   render(
     context: RenderContext,
-    args?: Record<string, string>
+    args?: Record<string, string>,
   ): Promise<ContentBlock[]> {
     return this.contentFile.render(context, args);
   }

@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import type {
@@ -35,7 +33,7 @@ export function commandToPrompt(pkg: Package, command: Command): Prompt {
 
   prompt.execute = async (
     args: Record<string, string>,
-    context?: RenderContext["hints"]
+    context?: RenderContext["hints"],
   ): Promise<GetPromptResult> => {
     const renderContext = pkg.renderContext(context);
     const content = await command.render(renderContext, args);
@@ -44,7 +42,7 @@ export function commandToPrompt(pkg: Package, command: Command): Prompt {
       if (block.type !== "text") {
         throw new McpError(
           400,
-          `Command prompts can only contain text content.`
+          `Command prompts can only contain text content.`,
         );
       }
       textParts.push(block.text);

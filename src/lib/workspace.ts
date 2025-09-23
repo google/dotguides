@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { Package } from "./package.js";
@@ -50,7 +48,7 @@ export class Workspace {
             const pkg = await adapter.loadPackage(
               this,
               directory,
-              packageInfo.name
+              packageInfo.name,
             );
             this.packageMap[pkg.name] = pkg;
           }
@@ -73,7 +71,7 @@ export class Workspace {
   }
 
   async systemInstructions(
-    options: { supportsResources?: boolean; listDocs?: boolean } = {}
+    options: { supportsResources?: boolean; listDocs?: boolean } = {},
   ): Promise<string> {
     const packageSections = await Promise.all(
       Object.values(this.packageMap).map(async (p) => {
@@ -117,15 +115,15 @@ export class Workspace {
                           (d) =>
                             `- [${d.title}](docs:${p.name}:${d.config.name})${
                               d.description ? `: ${d.description}` : ""
-                            }`
+                            }`,
                         )
                         .join("\n")
-                    : null
+                    : null,
                 )
               : "",
-          ]
+          ],
         );
-      })
+      }),
     );
 
     return section(
@@ -146,7 +144,7 @@ ${this.languages
       Runtime: l.runtime,
       Version: l.runtimeVersion,
       "Package Manager": l.packageManager,
-    })
+    }),
   )
   .join("\n\n")}${
         Object.keys(this.packageMap).length > 0
@@ -159,7 +157,7 @@ The following are the discovered package usage guides for this workspace. FOLLOW
 ${packageSections.join("\n\n")}
 `.trim()
           : ""
-      }`.trim()
+      }`.trim(),
     );
   }
 }

@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { ContentBlock } from "@modelcontextprotocol/sdk/types.js";
@@ -54,7 +52,7 @@ export function section(
     attrs?: Record<string, string | undefined>;
     condition?: any;
   },
-  content: string | string[] | undefined | null
+  content: string | string[] | undefined | null,
 ) {
   if (options.condition === false || !content) return "";
   if (Array.isArray(content)) content = content.join("\n");

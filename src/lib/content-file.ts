@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { extname, resolve } from "path";
@@ -36,13 +34,13 @@ export interface ContentFile {
   readonly pkg: Package;
   render(
     context?: RenderContext,
-    args?: Record<string, any>
+    args?: Record<string, any>,
   ): Promise<ContentBlock[]>;
 }
 
 export async function loadContentFileText(
   rootDir: string,
-  source: ContentFileSource
+  source: ContentFileSource,
 ): Promise<string> {
   if ("path" in source) {
     return await readFile(resolve(rootDir, source.path), { encoding: "utf8" });
@@ -54,7 +52,7 @@ export async function loadContentFileText(
 
 export async function loadContentFile(
   pkg: Package,
-  source: ContentFileSource
+  source: ContentFileSource,
 ): Promise<ContentFile> {
   let isPrompt = false;
   if ("path" in source) {

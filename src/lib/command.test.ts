@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -62,7 +60,7 @@ describe("Command", () => {
           frontmatter: { arguments: test.args },
         };
         vi.mocked(loadContentFile).mockResolvedValue(
-          mockContentFile as ContentFile
+          mockContentFile as ContentFile,
         );
 
         const config: any = {
@@ -79,7 +77,7 @@ describe("Command", () => {
             dotprompt: { parse: () => ({ frontmatter: {} }) },
           } as unknown as Package,
           { path: "test.prompt" },
-          config
+          config,
         );
         expect(command.signature).toBe(test.expect);
       });

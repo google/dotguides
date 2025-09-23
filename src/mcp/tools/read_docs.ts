@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import z from "zod";
@@ -30,7 +28,7 @@ export const read_docs = tool(
       uris: z
         .array(z.string())
         .describe(
-          "list of docs uris to load, usually in the form `docs:{packageName}:{path/to/doc}`"
+          "list of docs uris to load, usually in the form `docs:{packageName}:{path/to/doc}`",
         ),
     }),
   },
@@ -64,11 +62,11 @@ export const read_docs = tool(
             type: "text" as const,
             text: section({ name: "doc", attrs: { package: pkg, name } }, text),
           };
-        })
+        }),
     );
 
     return {
       content: renderedContent.filter((c) => !!c),
     };
-  }
+  },
 );

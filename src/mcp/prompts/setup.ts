@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { InvalidRequestError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
@@ -36,7 +34,7 @@ export const setup = prompt(
     const setupGuide = pkg.guides.find((g) => g.config.name === "setup");
     if (!setupGuide) {
       throw new InvalidRequestError(
-        `Setup guide not found for package '${args.package}'.`
+        `Setup guide not found for package '${args.package}'.`,
       );
     }
     const content = await setupGuide.render(pkg.renderContext());
@@ -51,5 +49,5 @@ export const setup = prompt(
         },
       ],
     };
-  }
+  },
 );

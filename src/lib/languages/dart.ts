@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { join } from "path";
@@ -121,7 +119,7 @@ export class DartLanguageAdapter implements LanguageAdapter {
   async loadPackage(
     workspace: Workspace,
     directory: string,
-    name: string
+    name: string,
   ): Promise<Package> {
     // Get package location from .dart_tool/package_config.json
     const packages = await this._parsePackageConfig(directory);
@@ -130,7 +128,7 @@ export class DartLanguageAdapter implements LanguageAdapter {
     const pkg = packages.find((p) => p.name === name);
     if (!pkg) {
       throw new Error(
-        `Package ${name} not found in .dart_tool/package_config.json`
+        `Package ${name} not found in .dart_tool/package_config.json`,
       );
     }
 
@@ -166,7 +164,7 @@ export class DartLanguageAdapter implements LanguageAdapter {
     // Check pub.dev for contrib packages
     const promises = packages.map(async (pkg) => {
       const url = `https://pub.dev/packages/dotguides_contrib_${normalize(
-        pkg
+        pkg,
       )}`;
       try {
         const res = await cachedFetch(url, { method: "HEAD" });
@@ -191,7 +189,7 @@ export class DartLanguageAdapter implements LanguageAdapter {
   > {
     const packageConfigContent = await readAny(
       directory,
-      ".dart_tool/package_config.json"
+      ".dart_tool/package_config.json",
     );
     if (!packageConfigContent) {
       return [];
@@ -215,7 +213,7 @@ export class DartLanguageAdapter implements LanguageAdapter {
           const contribPackageName = `dotguides_contrib_${normalize(pkg.name)}`;
           const contribRootPath = rootPath.replace(
             `/${pkg.name}-`,
-            `/${contribPackageName}-`
+            `/${contribPackageName}-`,
           );
           const contribGuidesDir = join(contribRootPath, ".guides");
 

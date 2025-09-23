@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import type {
@@ -84,7 +82,7 @@ export class LoggingTransport implements Transport {
       const logEntry = `[${new Date().toISOString()}] ${direction}: ${JSON.stringify(
         data,
         null,
-        2
+        2,
       )}\n\n`;
       await appendFile(this.logFile, logEntry);
     } catch (e) {
@@ -99,7 +97,7 @@ export class LoggingTransport implements Transport {
 
   async send(
     message: JSONRPCMessage,
-    options?: TransportSendOptions
+    options?: TransportSendOptions,
   ): Promise<void> {
     this.log("SEND", message);
     return this.wrapped.send(message, options);

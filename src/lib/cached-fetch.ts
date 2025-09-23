@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { promises as fs } from "fs";
@@ -41,7 +39,7 @@ async function ensureCacheDir(): Promise<void> {
 
 export async function cachedFetch(
   url: string | URL,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<Response> {
   await ensureCacheDir();
   const urlString = url.toString();
@@ -127,7 +125,7 @@ export async function cachedFetch(
     if (staleEntry) {
       console.warn(
         `Fetch for ${urlString} failed, serving stale content from cache:`,
-        e.message
+        e.message,
       );
       const headers = new Headers(staleEntry.headers);
       return new Response(staleEntry.body, {

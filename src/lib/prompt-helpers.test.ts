@@ -12,8 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -66,7 +64,7 @@ describe("packageHelpers", () => {
       }
       const result = helpers.packageFile("test-file.txt");
       const expectedPath = resolve(
-        "/workspace/node_modules/test-package/test-file.txt"
+        "/workspace/node_modules/test-package/test-file.txt",
       );
       expect(result).toEqual(`<file path="${expectedPath}">
 \`\`\`txt
@@ -83,10 +81,10 @@ hello world
       }
       const result = helpers.packageFile("non-existent-file.txt");
       const expectedPath = resolve(
-        "/workspace/node_modules/test-package/non-existent-file.txt"
+        "/workspace/node_modules/test-package/non-existent-file.txt",
       );
       expect(result).toEqual(
-        `<file path="${expectedPath}" error="FILE_NOT_FOUND"/>`
+        `<file path="${expectedPath}" error="FILE_NOT_FOUND"/>`,
       );
     });
   });
@@ -183,7 +181,7 @@ hello from workspace 2
         }
         const result = helpers.hasDependency(
           test.input.packageName,
-          test.input.range
+          test.input.range,
         );
         expect(result).toEqual(test.expect);
       });
