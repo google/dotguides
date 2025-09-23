@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+VERSION=$(node -p "require('./package.json').version")
+PACKAGE_NAME="dotguides-${VERSION}.tgz"
+
+pnpm pack
+
+gsutil cp "${PACKAGE_NAME}" "gs://dotguides-preview/dotguides-${VERSION}.tgz"
+gsutil cp "${PACKAGE_NAME}" "gs://dotguides-preview/dotguides-latest.tgz"
+
+rm "${PACKAGE_NAME}"

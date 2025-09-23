@@ -19,3 +19,4 @@
 - [ ] Make `dotguides up` compatible with Claude Code, Cursor, Copilot, and Codex.
 - [ ] Come up with a way to add dotguides guidance from websites, like having a `/.well-known/.guides/config.json` file or something. MUST have a `config.json` and all content must be explicitly declared in the config file.
 - [ ] Have `dotguides mcp --author` that starts an MCP server in a special "author" mode that can help authors inspect and test out their content.
+- [ ] Improve security of remote URL guidance by downloading only once per version, maybe add the ability to have a content hash? Though that would sort of defeat the purpose.
