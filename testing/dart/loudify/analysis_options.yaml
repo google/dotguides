@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# SPDX-License-Identifier: Apache-2.0
 
 # This file configures the static analysis results for your project (errors,
 # warnings, and lints).
@@ -28,7 +26,6 @@
 # The core lints are also what is used by pub.dev for scoring packages.
 
 include: package:lints/recommended.yaml
-
 # Uncomment the following section to specify additional rules.
 
 # linter:
