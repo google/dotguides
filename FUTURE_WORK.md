@@ -20,3 +20,5 @@
 - [ ] Come up with a way to add dotguides guidance from websites, like having a `/.well-known/.guides/config.json` file or something. MUST have a `config.json` and all content must be explicitly declared in the config file.
 - [ ] Have `dotguides mcp --author` that starts an MCP server in a special "author" mode that can help authors inspect and test out their content.
 - [ ] Improve security of remote URL guidance by downloading only once per version, maybe add the ability to have a content hash? Though that would sort of defeat the purpose.
+- [ ] Add a way to configure additional `.guides` folders and install them from arbitrary places in your filesystem or arbitrary remote URLs perhaps.
+- [ ] Allow configurable token budgets for system instructions and have strategies for reducing context - for example instead of including usage guides just list libraries and descriptions with links to load usage guides, instead of listing docs just provide a list docs link with instructions about when to use it

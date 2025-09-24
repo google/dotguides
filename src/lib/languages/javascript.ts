@@ -186,6 +186,17 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
 
     const packagesWithDeps: (PackageInfo & { deps: string[] })[] = [];
 
+    if (context.workspacePackage?.name) {
+      packagesWithDeps.push({
+        ...context.workspacePackage,
+        deps: [
+          ...Object.keys(dependencies),
+          ...Object.keys(devDependencies),
+          ...Object.keys(optionalDependencies),
+        ],
+      });
+    }
+
     for (const name in allDeps) {
       const packagePath = join(directory, "node_modules", name);
       const guidesDir = join(packagePath, ".guides");
