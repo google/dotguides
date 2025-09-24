@@ -98,10 +98,3 @@ export async function runCli(argv: string[]) {
   }
 }
 
-// This allows the CLI to be executed directly, but also imported for tests.
-if (
-  process.argv[1] &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
-  runCli(process.argv);
-}
