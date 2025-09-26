@@ -43,6 +43,7 @@ document.
 After cloning the repo, follow these steps to build and run locally:
 
 ```
+npm install
 npm link
 npm run build:watch
 ```
