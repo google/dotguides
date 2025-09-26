@@ -34,3 +34,25 @@ All submissions, including submissions by project members, require review. We
 use GitHub pull requests for this purpose. Consult
 [GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
 information on using pull requests.
+
+## Workflow
+
+You will need `npm` installed, which is out of scope for this
+document.
+
+After cloning the repo, follow these steps to build and run locally:
+
+```
+npm install
+npm link
+npm run build:watch
+```
+
+After you perform the above, `dotguides` in your local path should
+run your newly built local copy.
+
+To run tests:
+
+```
+npm test
+```
