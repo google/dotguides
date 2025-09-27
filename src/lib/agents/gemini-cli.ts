@@ -1,11 +1,15 @@
 import type { AgentAdapter } from "./types.js";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { join } from "path";
-import { readSettings } from "../settings.js";
+import { type ContextBudget, readSettings } from "../settings.js";
 import { existsAny } from "../file-utils.js";
 
 export class GeminiCliAdapter implements AgentAdapter {
-  name(): string {
+  get name(): string {
+    return "gemini-cli";
+  }
+
+  get title(): string {
     return "Gemini CLI";
   }
 
@@ -18,6 +22,7 @@ export class GeminiCliAdapter implements AgentAdapter {
     config: {
       instructions: string;
       mcpServers: { [key: string]: any };
+      contextBudget: ContextBudget;
     },
   ): Promise<void> {
     await writeFile(join(workspaceDir, "DOTGUIDES.md"), config.instructions);

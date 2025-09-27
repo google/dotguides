@@ -71,7 +71,11 @@ export class Workspace {
   }
 
   async systemInstructions(
-    options: { supportsResources?: boolean; listDocs?: boolean } = {},
+    options: {
+      supportsResources?: boolean;
+      listDocs?: boolean;
+      contextBudget?: number;
+    } = {},
   ): Promise<string> {
     const packageSections = await Promise.all(
       Object.values(this.packageMap).map(async (p) => {

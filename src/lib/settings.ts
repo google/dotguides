@@ -20,7 +20,11 @@ import os from "os";
 
 const SETTINGS_FILE = ".guides.config.json";
 
+export type ContextBudget = "low" | "medium" | "high";
+
 export interface Settings {
+  agent?: string;
+  contextBudget?: ContextBudget;
   packages?: {
     disabled?: string[];
     discovered?: string[];
@@ -68,6 +72,17 @@ export async function readSettings(): Promise<Settings> {
       discovered: [...new Set(discovered)],
     },
   };
+
+  const contextBudget =
+    workspaceSettings.contextBudget || userSettings.contextBudget;
+  if (contextBudget) {
+    settings.contextBudget = contextBudget;
+  }
+
+  const agent = workspaceSettings.agent || userSettings.agent;
+  if (agent) {
+    settings.agent = agent;
+  }
 
   return settings;
 }

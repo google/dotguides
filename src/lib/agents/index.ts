@@ -1,7 +1,15 @@
 import type { AgentAdapter } from "./types.js";
 import { GeminiCliAdapter } from "./gemini-cli.js";
+import { CursorAdapter } from "./cursor.js";
 
-export const ALL_AGENTS: AgentAdapter[] = [new GeminiCliAdapter()];
+export const ALL_AGENTS: AgentAdapter[] = [
+  new GeminiCliAdapter(),
+  new CursorAdapter(),
+];
+
+export function findAgent(name: string): AgentAdapter | null {
+  return ALL_AGENTS.find((a) => a.name === name) || null;
+}
 
 export async function detectAgent(
   workspaceDir: string,

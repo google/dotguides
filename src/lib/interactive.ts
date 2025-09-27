@@ -17,6 +17,40 @@
 import { multiselect, select } from "@clack/prompts";
 import type { AgentAdapter } from "./agents/types.js";
 import { Package } from "./package.js";
+import type { ContextBudget } from "./settings.js";
+
+export async function selectContextBudget(
+  initialValue: ContextBudget = "medium",
+): Promise<ContextBudget | null> {
+  const selected = await select({
+    message:
+      "Select a context budget for how much content can be included in your agent's sytem prompt:",
+    options: [
+      {
+        value: "low",
+        label: "Low",
+        hint: "< ~5K tokens",
+      },
+      {
+        value: "medium",
+        label: "Medium",
+        hint: "< ~15K tokens",
+      },
+      {
+        value: "high",
+        label: "High",
+        hint: "< ~30K tokens",
+      },
+    ],
+    initialValue,
+  });
+
+  if (typeof selected === "symbol") {
+    return null;
+  }
+
+  return selected as ContextBudget;
+}
 
 export async function selectPackages(
   allPackages: Package[],
@@ -64,20 +98,20 @@ export async function selectPackages(
 
 export async function selectAgent(
   agents: AgentAdapter[],
-): Promise<AgentAdapter | null | undefined> {
+): Promise<AgentAdapter | null> {
   if (agents.length === 0) {
     return null;
   }
   if (agents.length === 1) {
-    return agents[0];
+    return agents[0] ?? null;
   }
 
-  const selected = await select({
+  const selected: AgentAdapter | null | symbol | undefined = await select({
     message: "Select a coding agent to configure:",
     options: [
       ...agents.map((a) => ({
         value: a,
-        label: a.name(),
+        label: a.title,
       })),
       {
         value: null,
@@ -87,11 +121,11 @@ export async function selectAgent(
     ],
   });
 
-  if (
-    typeof selected === "symbol" ||
-    selected === undefined ||
-    selected === null
-  ) {
+  if (selected === null) {
+    return null;
+  }
+
+  if (typeof selected === "symbol" || selected === undefined) {
     return null;
   }
 
