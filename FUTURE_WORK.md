@@ -2,6 +2,7 @@
 - [x] Make `dotguides create` to bootstrap a `.guides` folder in the current directory.
 - [x] Implement commands.
 - [x] Implement support for Go.
+- [x] Make `dotguides up` interactive where you can choose which packages you want to activate, toggle MCP servers on and off, etc. Store that configuration in `.guides/settings.json`.
 - [ ] Implement support for Python.
 - [ ] Implement CLI commands to make testing things easier. Maybe `dotguides preview [--package <name>] <resource_type> <name> <...optional_args>` or something.
 - [ ] A `dotguides install` that installs contrib guidance where detected for the project.
@@ -15,7 +16,6 @@
 - [ ] Support `~/.guides/aliases.json` for some kind of custom aliasing (e.g. load guidance for `foo` package from `my-custom-foo-guides` package).
 - [ ] When reading a doc with children (e.g. reading `docs:mypackage:foo` when `docs:mypackage:foo/bar` exists), automatically list child docs at the end of the content.
 - [ ] Implement examples -- pull code snippets and have frontmatter able to be defined in top-of-file comment blocks
-- [ ] Make `dotguides up` interactive where you can choose which packages you want to activate, toggle MCP servers on and off, etc. Store that configuration in `.guides/settings.json`.
 - [ ] Make `dotguides up` compatible with Claude Code, Cursor, Copilot, and Codex.
 - [ ] Come up with a way to add dotguides guidance from websites, like having a `/.well-known/.guides/config.json` file or something. MUST have a `config.json` and all content must be explicitly declared in the config file.
 - [ ] Have `dotguides mcp --author` that starts an MCP server in a special "author" mode that can help authors inspect and test out their content.
