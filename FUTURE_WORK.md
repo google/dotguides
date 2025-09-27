@@ -22,3 +22,4 @@
 - [ ] Improve security of remote URL guidance by downloading only once per version, maybe add the ability to have a content hash? Though that would sort of defeat the purpose.
 - [ ] Add a way to configure additional `.guides` folders and install them from arbitrary places in your filesystem or arbitrary remote URLs perhaps.
 - [ ] Allow configurable token budgets for system instructions and have strategies for reducing context - for example instead of including usage guides just list libraries and descriptions with links to load usage guides, instead of listing docs just provide a list docs link with instructions about when to use it
+- [ ] Big test refactor to come up with a harness that can easily bootstrap a workspace directory in various conditions since e.g. Go relies on shell commands and there's way too much hacky mocking happening now.

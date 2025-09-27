@@ -1,8 +1,16 @@
 import type { AgentAdapter } from "./types.js";
-import { mkdir, writeFile, readFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { join } from "path";
-import { type ContextBudget, readSettings } from "../settings.js";
-import { existsAny } from "../file-utils.js";
+import { type ContextBudget } from "../settings.js";
+import { existsAny, readJsonFile, writeJsonFile } from "../file-utils.js";
+import { mergeMcpServers } from "./utils.js";
+
+interface GeminiSettings {
+  context?: {
+    fileName?: string | string[];
+  };
+  mcpServers?: Record<string, any>;
+}
 
 export class GeminiCliAdapter implements AgentAdapter {
   get name(): string {
@@ -28,15 +36,12 @@ export class GeminiCliAdapter implements AgentAdapter {
     await writeFile(join(workspaceDir, "DOTGUIDES.md"), config.instructions);
 
     const geminiDir = join(workspaceDir, ".gemini");
-    await mkdir(geminiDir, { recursive: true });
     const geminiSettingsPath = join(geminiDir, "settings.json");
 
-    let geminiSettings: any = {};
-    try {
-      geminiSettings = JSON.parse(await readFile(geminiSettingsPath, "utf-8"));
-    } catch (e) {
-      // file doesn't exist or is invalid json, start with empty settings
-    }
+    const geminiSettings = await readJsonFile<GeminiSettings>(
+      geminiSettingsPath,
+      {},
+    );
 
     geminiSettings.context ??= {};
     if (!geminiSettings.context.fileName) {
@@ -51,17 +56,11 @@ export class GeminiCliAdapter implements AgentAdapter {
       geminiSettings.context.fileName = filenames;
     }
 
-    const settings = await readSettings();
-    geminiSettings.mcpServers ??= {};
-    for (const serverName in config.mcpServers) {
-      if (!settings.mcpServers || !settings.mcpServers[serverName]) {
-        geminiSettings.mcpServers[serverName] = config.mcpServers[serverName];
-      }
-    }
-
-    await writeFile(
-      geminiSettingsPath,
-      JSON.stringify(geminiSettings, null, 2),
+    geminiSettings.mcpServers = mergeMcpServers(
+      geminiSettings.mcpServers ?? {},
+      config.mcpServers,
     );
+
+    await writeJsonFile(geminiSettingsPath, geminiSettings);
   }
 }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { readFile, stat } from "fs/promises";
-import { join, resolve } from "path";
+import { readFile, stat, writeFile, mkdir } from "fs/promises";
+import { join, resolve, dirname } from "path";
 
 /**
  * Checks if any of the specified files exists relative to the specified root.
@@ -59,4 +59,46 @@ export async function readAny(
     }
   }
   return null;
+}
+
+/**
+ * Reads and parses a JSON file, returning a fallback value if the file does not exist.
+ * @param filePath The path to the JSON file.
+ * @param fallback The fallback value to return if the file does not exist.
+ * @returns The parsed JSON object, or the fallback value.
+ */
+export async function readJsonFile<T = unknown>(
+  filePath: string,
+): Promise<T | null>;
+export async function readJsonFile<T>(
+  filePath: string,
+  fallback: T,
+): Promise<T>;
+export async function readJsonFile<T = unknown>(
+  filePath: string,
+  fallback: T | null = null,
+): Promise<T | null> {
+  try {
+    const content = await readFile(filePath, "utf-8");
+    return JSON.parse(content);
+  } catch (e: any) {
+    if (e.code === "ENOENT") {
+      return fallback;
+    }
+    throw e;
+  }
+}
+
+/**
+ * Writes a JSON object to a file, creating the directory if it does not exist.
+ * @param filePath The path to the JSON file.
+ * @param data The JSON object to write.
+ */
+export async function writeJsonFile(
+  filePath: string,
+  data: any,
+): Promise<void> {
+  const dir = dirname(filePath);
+  await mkdir(dir, { recursive: true });
+  await writeFile(filePath, JSON.stringify(data, null, 2));
 }

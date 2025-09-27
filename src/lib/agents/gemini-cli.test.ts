@@ -5,23 +5,19 @@ import { join } from "path";
 // Mock file-utils
 vi.mock("../file-utils.js", () => ({
   existsAny: vi.fn(),
+  readJsonFile: vi.fn(),
+  writeJsonFile: vi.fn(),
 }));
 
 // Mock fs/promises
 vi.mock("fs/promises", () => ({
-  mkdir: vi.fn(),
   writeFile: vi.fn(),
-  readFile: vi.fn(),
 }));
 
-// Mock settings
-vi.mock("../settings.js", () => ({
-  readSettings: vi.fn(),
-}));
-
-const { existsAny } = await import("../file-utils.js");
-const { mkdir, writeFile, readFile } = await import("fs/promises");
-const { readSettings } = await import("../settings.js");
+const { existsAny, readJsonFile, writeJsonFile } = await import(
+  "../file-utils.js"
+);
+const { writeFile } = await import("fs/promises");
 
 describe("GeminiCliAdapter", () => {
   let adapter: GeminiCliAdapter;
@@ -63,8 +59,7 @@ describe("GeminiCliAdapter", () => {
     const contextBudget = "medium";
 
     it("should write instructions and update settings", async () => {
-      (readFile as any).mockRejectedValue({ code: "ENOENT" }); // No existing settings
-      (readSettings as any).mockResolvedValue({});
+      (readJsonFile as any).mockResolvedValue({}); // No existing settings
 
       await adapter.up(workspaceDir, {
         instructions,
@@ -77,10 +72,6 @@ describe("GeminiCliAdapter", () => {
         instructions,
       );
 
-      expect(mkdir).toHaveBeenCalledWith(join(workspaceDir, ".gemini"), {
-        recursive: true,
-      });
-
       const expectedSettings = {
         context: {
           fileName: ["GEMINI.md", "DOTGUIDES.md"],
@@ -90,9 +81,9 @@ describe("GeminiCliAdapter", () => {
         },
       };
 
-      expect(writeFile).toHaveBeenCalledWith(
+      expect(writeJsonFile).toHaveBeenCalledWith(
         join(workspaceDir, ".gemini", "settings.json"),
-        JSON.stringify(expectedSettings, null, 2),
+        expectedSettings,
       );
     });
 
@@ -105,8 +96,7 @@ describe("GeminiCliAdapter", () => {
           existing: { command: "bar" },
         },
       };
-      (readFile as any).mockResolvedValue(JSON.stringify(existingSettings));
-      (readSettings as any).mockResolvedValue({});
+      (readJsonFile as any).mockResolvedValue(existingSettings);
 
       await adapter.up(workspaceDir, {
         instructions,
@@ -124,9 +114,9 @@ describe("GeminiCliAdapter", () => {
         },
       };
 
-      expect(writeFile).toHaveBeenCalledWith(
+      expect(writeJsonFile).toHaveBeenCalledWith(
         join(workspaceDir, ".gemini", "settings.json"),
-        JSON.stringify(expectedSettings, null, 2),
+        expectedSettings,
       );
     });
 
@@ -136,8 +126,7 @@ describe("GeminiCliAdapter", () => {
           fileName: ["DOTGUIDES.md", "OTHER.md"],
         },
       };
-      (readFile as any).mockResolvedValue(JSON.stringify(existingSettings));
-      (readSettings as any).mockResolvedValue({});
+      (readJsonFile as any).mockResolvedValue(existingSettings);
 
       await adapter.up(workspaceDir, {
         instructions,
@@ -145,37 +134,12 @@ describe("GeminiCliAdapter", () => {
         contextBudget,
       });
 
-      const writtenConfig = JSON.parse(
-        (writeFile as any).mock.calls.find((c: [string, string]) =>
-          c[0].endsWith("settings.json"),
-        )[1],
-      );
+      const writtenConfig = (writeJsonFile as any).mock.calls[0][1];
 
       expect(writtenConfig.context.fileName).toEqual([
         "DOTGUIDES.md",
         "OTHER.md",
       ]);
-    });
-
-    it("should not add mcp server if already in global settings", async () => {
-      (readFile as any).mockRejectedValue({ code: "ENOENT" }); // No existing settings
-      (readSettings as any).mockResolvedValue({
-        mcpServers: { test: { command: "global" } },
-      });
-
-      await adapter.up(workspaceDir, {
-        instructions,
-        mcpServers,
-        contextBudget,
-      });
-
-      const writtenConfig = JSON.parse(
-        (writeFile as any).mock.calls.find((c: [string, string]) =>
-          c[0].endsWith("settings.json"),
-        )[1],
-      );
-
-      expect(writtenConfig.mcpServers).toEqual({});
     });
   });
 });

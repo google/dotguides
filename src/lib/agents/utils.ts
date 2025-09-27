@@ -1,3 +1,16 @@
+export function mergeMcpServers(
+  existing: { [key: string]: any },
+  discovered: { [key: string]: any },
+): { [key: string]: any } {
+  const merged = { ...existing };
+  for (const key in discovered) {
+    if (!merged[key]) {
+      merged[key] = discovered[key];
+    }
+  }
+  return merged;
+}
+
 export function appendOrUpdate(
   existingContent: string,
   instructions: string,

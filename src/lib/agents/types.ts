@@ -1,4 +1,5 @@
 import type { ContextBudget } from "../settings.js";
+import { Package } from "../package.js";
 
 export interface AgentAdapter {
   name: string;
@@ -12,4 +13,5 @@ export interface AgentAdapter {
       contextBudget: ContextBudget;
     },
   ): Promise<void>;
+  hook?(instructions: string, enabledPackages: Package[]): Promise<string>;
 }

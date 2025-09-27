@@ -26,6 +26,7 @@ import { initCommand } from "./commands/init.js";
 import { mcpCommand } from "./commands/mcp.js";
 import { upCommand } from "./commands/up.js";
 import { checkCommand } from "./commands/check.js";
+import { hookCommand } from "./commands/hook.js";
 
 export async function runCli(argv: string[]) {
   const { values, positionals } = parseArgs({
@@ -44,6 +45,9 @@ export async function runCli(argv: string[]) {
       },
       redo: {
         type: "boolean",
+      },
+      agent: {
+        type: "string",
       },
     },
     allowPositionals: true,
@@ -64,6 +68,9 @@ export async function runCli(argv: string[]) {
     console.log("  create\tCreate a new .guides directory with default files");
     console.log("  init\t\tInitialize a new .guides package");
     console.log("  up\t\tBootstrap Gemini CLI to use dotguides");
+    console.log(
+      "  hook\t\tOutput system instructions for the workspace for use in agent hooks",
+    );
     return;
   }
 
@@ -92,6 +99,9 @@ export async function runCli(argv: string[]) {
       break;
     case "up":
       await upCommand({ auto: !!values.auto, redo: !!values.redo });
+      break;
+    case "hook":
+      await hookCommand({ agent: values.agent as string });
       break;
     case "mcp":
       const workspace =

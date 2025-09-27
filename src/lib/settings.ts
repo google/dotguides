@@ -29,7 +29,6 @@ export interface Settings {
     disabled?: string[];
     discovered?: string[];
   };
-  mcpServers?: Record<string, any>;
 }
 
 async function readSettingsFile(path: string): Promise<Settings> {

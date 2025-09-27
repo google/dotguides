@@ -1,12 +1,14 @@
 import type { AgentAdapter } from "./types.js";
 import { GeminiCliAdapter } from "./gemini-cli.js";
 import { CursorAdapter } from "./cursor.js";
+import { ClaudeCodeAdapter } from "./claude-code.js";
 import { CopilotAdapter } from "./copilot.js";
 
 export const ALL_AGENTS: AgentAdapter[] = [
   new GeminiCliAdapter(),
   new CursorAdapter(),
   new CopilotAdapter(),
+  new ClaudeCodeAdapter(),
 ];
 
 export function findAgent(name: string): AgentAdapter | null {
