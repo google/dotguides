@@ -25,6 +25,15 @@ This project follows
 
 ## Contribution process
 
+The easiest way to develop is to use `npm link` to create an always up-to-date binary:
+
+```
+npm link
+npm run build:watch
+```
+
+This will make the `dotguides` command consistently run from your latest code.
+
 - Add unit tests for new functionality (`foo.ts` -> `foo.test.ts`)
 - Open an issue to discuss major changes to behavior with maintainers
 

@@ -28,7 +28,7 @@ import { nullable } from "zod";
 export class Workspace {
   readonly languages: LanguageContext[] = [];
   private languageAdapters: LanguageAdapter[] = allLanguages;
-  readonly packageMap: { [name: string]: Package } = {};
+  packageMap: { [name: string]: Package } = {};
 
   constructor(public directories: string[]) {}
 

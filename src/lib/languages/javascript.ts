@@ -119,14 +119,12 @@ export class JavascriptLanguageAdapter implements LanguageAdapter {
       name: tsconfigPath ? "typescript" : "javascript",
       packages: [],
     };
-    const guidesDir = join(directory, ".guides");
-    const hasGuides = !!(await existsAny(null, guidesDir));
     context.workspacePackage = {
       name: packageJson.name,
       packageVersion: packageJson.version,
       dependencyVersion: packageJson.version,
       dir: directory,
-      guides: hasGuides,
+      guides: false,
     };
 
     const packageLock = await existsAny(
