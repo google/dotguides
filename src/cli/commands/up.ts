@@ -7,27 +7,22 @@ import {
 import { log, intro, outro } from "@clack/prompts";
 import {
   readSettings,
-  readWorkspaceSettings,
   writeWorkspaceSettings,
   type ContextBudget,
+  type Settings,
 } from "../../lib/settings.js";
 import { Package } from "../../lib/package.js";
 import { ALL_AGENTS, detectAgent, findAgent } from "../../lib/agents/index.js";
 import type { AgentAdapter } from "../../lib/agents/types.js";
 
-export async function upCommand(options: {
-  auto?: boolean;
-  redo?: boolean;
-}): Promise<void> {
-  intro(`Bringing dotguides up...`);
-
-  const workspaceDir = process.cwd();
-  const workspace = await Workspace.load([workspaceDir]);
+async function handlePackageSelection(
+  workspace: Workspace,
+  options: { auto?: boolean; redo?: boolean },
+): Promise<Package[] | null> {
   const allPackages = workspace.packages;
-  const allPackageNames = allPackages.map((p) => p.name);
-
   if (allPackages.length === 0) {
     log.warning("No packages with guidance found in the current workspace.");
+    return [];
   }
 
   const settings = await readSettings();
@@ -54,23 +49,35 @@ export async function upCommand(options: {
       );
     }
   }
+  return selectedPackages;
+}
 
-  if (selectedPackages === null) {
-    log.info("User cancelled operation.");
-    return;
+async function handleAgentSelection(
+  workspaceDir: string,
+  options: { auto?: boolean; redo?: boolean },
+): Promise<AgentAdapter | null> {
+  const settings = await readSettings();
+  let agent: AgentAdapter | null = settings.agent
+    ? findAgent(settings.agent)
+    : await detectAgent(workspaceDir);
+
+  if (!agent || options.redo) {
+    if (options.auto) {
+      agent = ALL_AGENTS[0] || null;
+    } else {
+      agent = await selectAgent(ALL_AGENTS, agent || undefined);
+    }
   }
+  return agent;
+}
 
-  const selectedPackageNames = selectedPackages.map((p) => p.name);
-  const newlyDisabled = allPackages
-    .filter((p) => !selectedPackageNames.includes(p.name))
-    .map((p) => p.name);
-
-  const workspaceSettings = await readWorkspaceSettings();
-  workspaceSettings.packages ??= {};
-  workspaceSettings.packages.disabled = newlyDisabled;
-  workspaceSettings.packages.discovered = allPackageNames;
-
+async function handleContextBudgetSelection(options: {
+  auto?: boolean;
+  redo?: boolean;
+}): Promise<ContextBudget | null> {
+  const settings = await readSettings();
   let contextBudget = settings.contextBudget;
+
   if (!contextBudget || options.redo) {
     if (options.auto) {
       contextBudget = "medium";
@@ -79,16 +86,63 @@ export async function upCommand(options: {
         options.redo ? undefined : contextBudget,
       );
       if (!selectedBudget) {
-        log.info("User cancelled operation.");
-        return;
+        return null;
       }
       contextBudget = selectedBudget;
     }
   }
-  workspaceSettings.contextBudget = contextBudget;
+  return contextBudget;
+}
 
+export async function upCommand(options: {
+  auto?: boolean;
+  redo?: boolean;
+}): Promise<void> {
+  intro(`Bringing dotguides up...`);
+
+  const workspaceDir = process.cwd();
+  const workspace = await Workspace.load([workspaceDir]);
+
+  // 1. Select Packages
+  const selectedPackages = await handlePackageSelection(workspace, options);
+  if (selectedPackages === null) {
+    log.info("User cancelled operation.");
+    return;
+  }
+
+  // 2. Select Agent
+  const agent = await handleAgentSelection(workspaceDir, options);
+  if (!agent) {
+    log.error("No coding agent selected. Exiting.");
+    return;
+  }
+  log.info(`Configuring for ${agent.title}...`);
+
+  // 3. Select Context Budget
+  const contextBudget = await handleContextBudgetSelection(options);
+  if (!contextBudget) {
+    log.info("User cancelled operation.");
+    return;
+  }
+
+  // 4. Save Settings
+  const allPackageNames = workspace.packages.map((p) => p.name);
+  const selectedPackageNames = selectedPackages.map((p) => p.name);
+  const newlyDisabled = workspace.packages
+    .filter((p) => !selectedPackageNames.includes(p.name))
+    .map((p) => p.name);
+
+  const workspaceSettings: Settings = {
+    packages: {
+      disabled: newlyDisabled,
+      discovered: allPackageNames,
+    },
+    agent: agent.name,
+    contextBudget: contextBudget,
+  };
   await writeWorkspaceSettings(workspaceSettings);
 
+  // 5. Update workspace and UP the agent
   workspace.packageMap = selectedPackages.reduce(
     (acc, p) => {
       acc[p.name] = p;
@@ -96,31 +150,6 @@ export async function upCommand(options: {
     },
     {} as { [name: string]: Package },
   );
-
-  let agent: AgentAdapter | null = settings.agent
-    ? findAgent(settings.agent)
-    : await detectAgent(workspaceDir);
-  if (!agent || options.redo) {
-    if (options.auto) {
-      agent = ALL_AGENTS[0] || null;
-    } else {
-      agent = await selectAgent(ALL_AGENTS);
-    }
-  }
-
-  if (!agent) {
-    log.error("No coding agent selected. Exiting.");
-    return;
-  }
-
-  workspaceSettings.agent = agent.name;
-
-  if (!agent) {
-    log.error("No coding agent selected. Exiting.");
-    return;
-  }
-
-  log.info(`Configuring for ${agent.title}...`);
 
   const budgetMap: Record<ContextBudget, number> = {
     low: 5000,
@@ -132,6 +161,7 @@ export async function upCommand(options: {
     listDocs: true,
     contextBudget: budgetMap[contextBudget],
   });
+
   const mcpServers: { [key: string]: any } = {
     dotguides: {
       command: "dotguides",

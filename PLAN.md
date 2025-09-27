@@ -56,19 +56,16 @@ This document outlines the plan to enhance the `dotguides up` command with inter
 
 ### Milestone 4: Configuration Profile Selection
 
-- [ ] **Define Configuration Profiles:**
-  - [ ] Define what "Balanced (default)", "Compact", and "Verbose" mean. This will likely translate to different sets of prompts or context provided to the agent.
-  - [ ] For example:
-    - **Compact:** Minimal context, just the essentials.
-    - **Balanced:** A good mix of context and brevity.
-    - **Verbose:** Maximum context, including extended explanations.
-- [ ] **Implement Profile Selection Prompt:**
-  - [ ] In `src/lib/interactive.ts`, create a function that uses `@clack/prompts` to show a select prompt for the configuration profile.
-- [ ] **Apply Configuration:**
-  - [ ] The `up()` method of the `AgentAdapter` will take the selected profile as an argument.
-  - [ ] The adapter will be responsible for using the profile to adjust the MCP server setup (e.g., by selecting different prompt templates).
-- [ ] **Update `up` command:**
-  - [ ] In `src/cli/commands/up.ts`, call the profile selection logic and pass the result to the agent's `up()` method.
+- [x] **Define Context Budget:**
+  - [x] Define "low", "medium", and "high" context budgets corresponding to ~5k, ~15k, and ~30k tokens.
+  - [x] This is stored in `.guides.config.json` as `contextBudget`.
+- [x] **Implement Budget Selection Prompt:**
+  - [x] In `src/lib/interactive.ts`, create a function that uses `@clack/prompts` to show a select prompt for the context budget.
+- [x] **Apply Configuration:**
+  - [x] The `up()` method of the `AgentAdapter` takes the selected budget as an argument.
+- [x] **Update `up` command:**
+  - [x] In `src/cli/commands/up.ts`, call the budget selection logic and pass the result to the agent's `up()` method.
+  - [x] Add `--auto` and `--redo` flags to control the interactive prompts.
 
 ### Milestone 5: Integration and Testing
 

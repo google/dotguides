@@ -66,13 +66,15 @@ export async function selectPackages(
 
   const options = allPackages
     .map((p) => {
-      const hint = p.guides.find((g) => g.config.name === "usage")?.config
-        .description;
+      const description = p.guides.find((g) => g.config.name === "usage")
+        ?.config.description;
       const isNew = newPackageNames.has(p.name);
+      const newHint = showNew && isNew ? "new!" : "";
+      const hint = [newHint, description].filter(Boolean).join(" ");
       return {
         value: p,
         label: p.name,
-        hint: showNew && isNew ? "new!" : "",
+        hint,
         isNew,
       };
     })
@@ -98,6 +100,7 @@ export async function selectPackages(
 
 export async function selectAgent(
   agents: AgentAdapter[],
+  initialValue?: AgentAdapter,
 ): Promise<AgentAdapter | null> {
   if (agents.length === 0) {
     return null;
@@ -119,6 +122,7 @@ export async function selectAgent(
         hint: "Exit without making changes",
       },
     ],
+    initialValue,
   });
 
   if (selected === null) {
