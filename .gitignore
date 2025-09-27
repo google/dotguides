@@ -1,3 +1,6 @@
 /dist
 node_modules
 package-lock.json
+firebase-debug.log
+.firebase
+.genkit

@@ -39,6 +39,12 @@ export async function runCli(argv: string[]) {
         type: "string",
         short: "w",
       },
+      auto: {
+        type: "boolean",
+      },
+      redo: {
+        type: "boolean",
+      },
     },
     allowPositionals: true,
     strict: false,
@@ -85,7 +91,7 @@ export async function runCli(argv: string[]) {
       await createCommand();
       break;
     case "up":
-      await upCommand();
+      await upCommand({ auto: !!values.auto, redo: !!values.redo });
       break;
     case "mcp":
       const workspace =
@@ -97,4 +103,3 @@ export async function runCli(argv: string[]) {
       process.exit(1);
   }
 }
-
