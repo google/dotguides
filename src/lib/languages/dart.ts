@@ -113,8 +113,6 @@ export class DartLanguageAdapter implements LanguageAdapter {
       });
     }
 
-    console.log(context);
-
     return context;
   }
 
