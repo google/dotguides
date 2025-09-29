@@ -28,7 +28,7 @@ import { nullable } from "zod";
 export class Workspace {
   readonly languages: LanguageContext[] = [];
   private languageAdapters: LanguageAdapter[] = allLanguages;
-  readonly packageMap: { [name: string]: Package } = {};
+  packageMap: { [name: string]: Package } = {};
 
   constructor(public directories: string[]) {}
 
@@ -71,7 +71,11 @@ export class Workspace {
   }
 
   async systemInstructions(
-    options: { supportsResources?: boolean; listDocs?: boolean } = {},
+    options: {
+      supportsResources?: boolean;
+      listDocs?: boolean;
+      contextBudget?: number;
+    } = {},
   ): Promise<string> {
     const packageSections = await Promise.all(
       Object.values(this.packageMap).map(async (p) => {
