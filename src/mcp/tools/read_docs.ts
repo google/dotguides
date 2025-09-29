@@ -28,7 +28,7 @@ export const read_docs = tool(
       uris: z
         .array(z.string())
         .describe(
-          "list of docs uris to load, usually in the form `docs:{packageName}:{path/to/doc}`",
+          "list of docs uris to load, usually in the form `docs:{packageName}:{path/to/doc}` or `guides:{packageName}:{guideName}`",
         ),
     }),
   },
