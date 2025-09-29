@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { join } from "path";
+import { join, isAbsolute, resolve, dirname } from "path";
 import { stat } from "fs/promises";
 import { load } from "js-yaml";
 import { Package } from "../package.js";
@@ -113,6 +113,8 @@ export class DartLanguageAdapter implements LanguageAdapter {
       });
     }
 
+    console.log(context);
+
     return context;
   }
 
@@ -121,6 +123,7 @@ export class DartLanguageAdapter implements LanguageAdapter {
     directory: string,
     name: string,
   ): Promise<Package> {
+
     // Get package location from .dart_tool/package_config.json
     const packages = await this._parsePackageConfig(directory);
 
@@ -198,14 +201,18 @@ export class DartLanguageAdapter implements LanguageAdapter {
     try {
       const packageConfig = JSON.parse(packageConfigContent.content);
       const packages = packageConfig.packages || [];
+      const packageConfigDir = dirname(packageConfigContent.file);
 
       return packages
         .filter((pkg: any) => pkg.name && pkg.rootUri)
         .map((pkg: any) => {
           // Convert file:// URI to local path
-          const rootPath = pkg.rootUri.startsWith("file://")
-            ? pkg.rootUri.substring(7) // Remove 'file://' prefix
-            : pkg.rootUri;
+          let rootPath = pkg.rootUri;
+          if (rootPath.startsWith("file://")) {
+            rootPath = rootPath.substring(7); // Remove 'file://' prefix
+          } else if (!isAbsolute(rootPath)) {
+            rootPath = resolve(packageConfigDir, rootPath);
+          }
 
           const guidesDir = join(rootPath, ".guides");
 
