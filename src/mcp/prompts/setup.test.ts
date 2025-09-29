@@ -19,6 +19,11 @@ import { setup } from "./setup.js";
 import { Workspace } from "../../lib/workspace.js";
 import { Guide } from "../../lib/guide.js";
 import { InvalidRequestError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
+import { readSettings } from "../../lib/settings.js";
+
+vi.mock("../../lib/settings.js", () => ({
+  readSettings: vi.fn(),
+}));
 
 describe("setup prompt", () => {
   it("should return setup instructions for a package", async () => {
@@ -51,14 +56,43 @@ describe("setup prompt", () => {
     expect(mockGuide.render).toHaveBeenCalledWith(mockRenderContext);
   });
 
-  it("should throw an error if package is not provided", async () => {
+  it("should list pending setup guides if package is not provided", async () => {
     const mockWorkspace = {
-      packageMap: {},
+      packagesWithSetup: [{ name: "pkg1" }, { name: "pkg2" }],
     } as unknown as Workspace;
+    (readSettings as any).mockResolvedValue({
+      packages: { setupComplete: ["pkg2"] },
+    });
 
-    await expect(
-      setup.fn({ package: "" }, { workspace: mockWorkspace }),
-    ).rejects.toThrow(InvalidRequestError);
+    const result = await setup.fn(
+      { package: "" },
+      { workspace: mockWorkspace },
+    );
+
+    expect(result.messages).toHaveLength(1);
+    expect(result.messages[0]!.content.text).toContain(
+      "- pkg1 ([view setup](guides:pkg1:setup))",
+    );
+    expect(result.messages[0]!.content.text).not.toContain("pkg2");
+  });
+
+  it("should return a message if no pending setup guides are available", async () => {
+    const mockWorkspace = {
+      packagesWithSetup: [{ name: "pkg1" }],
+    } as unknown as Workspace;
+    (readSettings as any).mockResolvedValue({
+      packages: { setupComplete: ["pkg1"] },
+    });
+
+    const result = await setup.fn(
+      { package: "" },
+      { workspace: mockWorkspace },
+    );
+
+    expect(result.messages).toHaveLength(1);
+    expect(result.messages[0]!.content.text).toBe(
+      "All packages with setup guides have been configured.",
+    );
   });
 
   it("should throw an error if package is not found", async () => {

@@ -34,14 +34,17 @@ export const read_docs = tool(
   },
   async ({ uris }, { workspace }) => {
     const docs = uris.map((uri) => {
-      const [_, pkg, name] = uri.split(":");
-      return { pkg, name, doc: workspace.doc(pkg, name) };
+      const [protocol, pkg, name] = uri.split(":");
+      if (protocol === "docs") {
+        return { pkg, name, doc: workspace.doc(pkg, name), isDoc: true };
+      }
+      return { pkg, name, doc: workspace.guide(pkg, name), isDoc: false };
     });
 
     const renderedContent = await Promise.all(
       docs
         .filter((d) => !!d.doc)
-        .map(async ({ doc, pkg, name }) => {
+        .map(async ({ doc, pkg, name, isDoc }) => {
           if (!doc) {
             return null;
           }
@@ -60,7 +63,10 @@ export const read_docs = tool(
             .join("\n");
           return {
             type: "text" as const,
-            text: section({ name: "doc", attrs: { package: pkg, name } }, text),
+            text: section(
+              { name: isDoc ? "doc" : "guide", attrs: { package: pkg, name } },
+              text,
+            ),
           };
         }),
     );

@@ -28,6 +28,7 @@ export interface Settings {
   packages?: {
     disabled?: string[];
     discovered?: string[];
+    setupComplete?: string[];
   };
 }
 
@@ -65,10 +66,16 @@ export async function readSettings(): Promise<Settings> {
     ...(workspaceSettings.packages?.discovered || []),
   ];
 
+  const setupComplete = [
+    ...(userSettings.packages?.setupComplete || []),
+    ...(workspaceSettings.packages?.setupComplete || []),
+  ];
+
   const settings: Settings = {
     packages: {
       disabled: [...new Set(disabled)],
       discovered: [...new Set(discovered)],
+      setupComplete: [...new Set(setupComplete)],
     },
   };
 

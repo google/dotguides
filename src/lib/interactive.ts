@@ -101,7 +101,7 @@ export async function selectPackages(
 export async function selectAgent(
   agents: AgentAdapter[],
   initialValue?: AgentAdapter,
-): Promise<AgentAdapter | null> {
+): Promise<AgentAdapter | "other" | null> {
   if (agents.length === 0) {
     return null;
   }
@@ -109,19 +109,25 @@ export async function selectAgent(
     return agents[0] ?? null;
   }
 
-  const selected: AgentAdapter | null | symbol | undefined = await select({
+  const options: {
+    value: AgentAdapter | "other";
+    label: string;
+    hint?: string;
+  }[] = [
+    ...agents.map((a) => ({
+      value: a,
+      label: a.title,
+    })),
+    {
+      value: "other",
+      label: "Other",
+      hint: "(manual setup)",
+    },
+  ];
+
+  const selected = await select({
     message: "Select a coding agent to configure:",
-    options: [
-      ...agents.map((a) => ({
-        value: a,
-        label: a.title,
-      })),
-      {
-        value: null,
-        label: "None of these",
-        hint: "Exit without making changes",
-      },
-    ],
+    options,
     initialValue,
   });
 

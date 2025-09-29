@@ -60,11 +60,19 @@ describe("settings", () => {
       const userSettings: Settings = {
         agent: "user-agent",
         contextBudget: "low",
-        packages: { disabled: ["pkg1"], discovered: ["pkg1", "pkg2"] },
+        packages: {
+          disabled: ["pkg1"],
+          discovered: ["pkg1", "pkg2"],
+          setupComplete: ["pkg4"],
+        },
       };
       const workspaceSettings: Settings = {
         agent: "workspace-agent",
-        packages: { disabled: ["pkg3"], discovered: ["pkg2", "pkg3"] },
+        packages: {
+          disabled: ["pkg3"],
+          discovered: ["pkg2", "pkg3"],
+          setupComplete: ["pkg5"],
+        },
       };
 
       (readFile as any).mockImplementation((path: string) => {
@@ -85,6 +93,7 @@ describe("settings", () => {
         packages: {
           disabled: ["pkg1", "pkg3"],
           discovered: ["pkg1", "pkg2", "pkg3"],
+          setupComplete: ["pkg4", "pkg5"],
         },
       });
     });
@@ -123,6 +132,7 @@ describe("settings", () => {
         packages: {
           disabled: [],
           discovered: [],
+          setupComplete: [],
         },
       });
     });

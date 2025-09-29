@@ -23,6 +23,7 @@ import {
 import { allLanguages } from "./language.js";
 import { renderDetails, section } from "./render-utils.js";
 import type { Doc } from "./doc.js";
+import type { Guide } from "./guide.js";
 import { nullable } from "zod";
 
 export class Workspace {
@@ -70,15 +71,31 @@ export class Workspace {
     return this.package(pkg)?.docs.find((d) => name === d.name) || null;
   }
 
+  guide(pkg: string | undefined, name: string | undefined): Guide | null {
+    if (!pkg || !name) return null;
+    return (
+      this.package(pkg)?.guides.find((g) => name === g.config.name) || null
+    );
+  }
+
+  get packagesWithSetup(): Package[] {
+    return this.packages.filter((p) =>
+      p.guides.some((g) => g.config.name === "setup"),
+    );
+  }
+
   async systemInstructions(
     options: {
+      selectedPackages?: Package[];
       supportsResources?: boolean;
       listDocs?: boolean;
       contextBudget?: number;
     } = {},
   ): Promise<string> {
+    const packagesToUse =
+      options.selectedPackages || Object.values(this.packageMap);
     const packageSections = await Promise.all(
-      Object.values(this.packageMap).map(async (p) => {
+      packagesToUse.map(async (p) => {
         const usageGuide = p.guides.find((g) => g.config.name === "usage");
         const styleGuide = p.guides.find((g) => g.config.name === "style");
 
@@ -151,7 +168,7 @@ ${this.languages
     }),
   )
   .join("\n\n")}${
-        Object.keys(this.packageMap).length > 0
+        packagesToUse.length > 0
           ? "\n\n" +
             `
 ## Package Usage Guides
@@ -163,5 +180,24 @@ ${packageSections.join("\n\n")}
           : ""
       }`.trim(),
     );
+  }
+
+  mcpConfig(options: { selectedPackages?: Package[] } = {}) {
+    const packagesToUse =
+      options.selectedPackages || Object.values(this.packageMap);
+    const mcpServers: { [key: string]: any } = {
+      dotguides: {
+        command: "dotguides",
+        args: ["mcp"],
+      },
+    };
+    for (const pkg of packagesToUse) {
+      if (pkg.config?.mcpServers) {
+        for (const serverName in pkg.config.mcpServers) {
+          mcpServers[serverName] = pkg.config.mcpServers[serverName];
+        }
+      }
+    }
+    return { mcpServers };
   }
 }

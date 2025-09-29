@@ -13,14 +13,6 @@ export async function hookCommand(options?: { agent?: string }): Promise<void> {
     (p) => !disabledPackages.includes(p.name),
   );
 
-  workspace.packageMap = enabledPackages.reduce(
-    (acc, p) => {
-      acc[p.name] = p;
-      return acc;
-    },
-    {} as { [name: string]: Package },
-  );
-
   const contextBudget: ContextBudget = settings.contextBudget || "medium";
   const budgetMap: Record<ContextBudget, number> = {
     low: 5000,
@@ -29,6 +21,7 @@ export async function hookCommand(options?: { agent?: string }): Promise<void> {
   };
 
   const instructions = await workspace.systemInstructions({
+    selectedPackages: enabledPackages,
     listDocs: true,
     contextBudget: budgetMap[contextBudget],
   });

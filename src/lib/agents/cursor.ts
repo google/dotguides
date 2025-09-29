@@ -36,7 +36,7 @@ alwaysApply: true
 ${config.instructions}
 `;
 
-    await writeFile(join(cursorRulesDir, "dotguides.md"), content);
+    await writeFile(join(cursorRulesDir, "dotguides.mdc"), content);
 
     const cursorDir = join(workspaceDir, ".cursor");
     const mcpPath = join(cursorDir, "mcp.json");

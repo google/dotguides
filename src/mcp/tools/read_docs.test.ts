@@ -18,6 +18,7 @@ import { describe, it, expect, vi } from "vitest";
 import { read_docs } from "./read_docs.js";
 import { Workspace } from "../../lib/workspace.js";
 import { Doc } from "../../lib/doc.js";
+import { Guide } from "../../lib/guide.js";
 
 describe("read_docs tool", () => {
   it("should read docs from the workspace", async () => {
@@ -30,6 +31,7 @@ describe("read_docs tool", () => {
 
     const mockWorkspace = {
       doc: vi.fn().mockReturnValue(mockDoc),
+      guide: vi.fn(),
     } as unknown as Workspace;
 
     const result = await read_docs.fn(
@@ -40,5 +42,28 @@ describe("read_docs tool", () => {
     expect(mockWorkspace.doc).toHaveBeenCalledWith("test-pkg", "test-doc");
     expect(result.content).toHaveLength(1);
     expect(result.content[0]!.text).toContain("Hello, world!");
+  });
+
+  it("should read guides from the workspace", async () => {
+    const mockGuide = {
+      config: { name: "test-guide" },
+      render: vi
+        .fn()
+        .mockResolvedValue([{ type: "text", text: "Hello, guide!" }]),
+    } as unknown as Guide;
+
+    const mockWorkspace = {
+      doc: vi.fn(),
+      guide: vi.fn().mockReturnValue(mockGuide),
+    } as unknown as Workspace;
+
+    const result = await read_docs.fn(
+      { uris: ["guides:test-pkg:test-guide"] },
+      { workspace: mockWorkspace },
+    );
+
+    expect(mockWorkspace.guide).toHaveBeenCalledWith("test-pkg", "test-guide");
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0]!.text).toContain("Hello, guide!");
   });
 });

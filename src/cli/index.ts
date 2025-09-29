@@ -43,7 +43,7 @@ export async function runCli(argv: string[]) {
       auto: {
         type: "boolean",
       },
-      redo: {
+      ask: {
         type: "boolean",
       },
       agent: {
@@ -98,7 +98,7 @@ export async function runCli(argv: string[]) {
       await createCommand();
       break;
     case "up":
-      await upCommand({ auto: !!values.auto, redo: !!values.redo });
+      await upCommand({ auto: !!values.auto, ask: !!values.ask });
       break;
     case "hook":
       await hookCommand({ agent: values.agent as string });
