@@ -210,10 +210,10 @@ describe("PythonLanguageAdapter", () => {
   describe("parseSetupCfg", () => {
     it("reads metadata name and version", () => {
       const content = `
-  [metadata]
-  name = my-package
-  version = 0.1.0
-  `;
+[metadata]
+name = my-package
+version = 0.1.0
+`;
       const metadata = parseSetupCfg(content);
       expect(metadata.name).toBe("my-package");
       expect(metadata.version).toBe("0.1.0");
