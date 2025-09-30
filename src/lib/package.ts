@@ -31,6 +31,7 @@ import type { Workspace } from "./workspace.js";
 import { Dotprompt } from "dotprompt";
 import { readFileSync } from "fs";
 import { packageHelpers } from "./prompt-helpers.js";
+import { section } from "./render-utils.js";
 
 export class Package {
   readonly guides: Guide[] = [];
@@ -212,6 +213,61 @@ export class Package {
     return (await Promise.all(promises))
       .flat()
       .filter((p): p is ContentConfig => p !== null);
+  }
+
+  async systemInstructions(
+    options: {
+      listDocs?: boolean;
+    } = {},
+  ): Promise<string> {
+    const usageGuide = this.guides.find((g) => g.config.name === "usage");
+    const styleGuide = this.guides.find((g) => g.config.name === "style");
+
+    let usageContent: string | undefined;
+    if (usageGuide) {
+      const blocks = await usageGuide.render();
+      const firstBlock = blocks[0];
+      if (firstBlock?.type === "text") {
+        usageContent = firstBlock.text;
+      }
+    }
+
+    let styleContent: string | undefined;
+    if (styleGuide) {
+      const blocks = await styleGuide.render();
+      const firstBlock = blocks[0];
+      if (firstBlock?.type === "text") {
+        styleContent = firstBlock.text;
+      }
+    }
+
+    return section(
+      {
+        name: "package",
+        attrs: { name: this.name },
+        condition: usageGuide || styleGuide,
+      },
+      [
+        section({ name: "usage_guide" }, usageContent),
+        section({ name: "style_guide" }, styleContent),
+        options.listDocs
+          ? section(
+              { name: "docs" },
+              this.docs.length
+                ? this.docs
+                    .filter((d) => !d.name.includes("/"))
+                    .map(
+                      (d) =>
+                        `- [${d.title}](docs:${this.name}:${d.config.name})${
+                          d.description ? `: ${d.description}` : ""
+                        }`,
+                    )
+                    .join("\n")
+                : null,
+            )
+          : "",
+      ],
+    );
   }
 
   doc(name: string) {

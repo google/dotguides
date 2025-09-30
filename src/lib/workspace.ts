@@ -96,53 +96,8 @@ export class Workspace {
       options.selectedPackages || Object.values(this.packageMap);
     const packageSections = await Promise.all(
       packagesToUse.map(async (p) => {
-        const usageGuide = p.guides.find((g) => g.config.name === "usage");
-        const styleGuide = p.guides.find((g) => g.config.name === "style");
-
-        let usageContent: string | undefined;
-        if (usageGuide) {
-          const blocks = await usageGuide.render();
-          const firstBlock = blocks[0];
-          if (firstBlock?.type === "text") {
-            usageContent = firstBlock.text;
-          }
-        }
-
-        let styleContent: string | undefined;
-        if (styleGuide) {
-          const blocks = await styleGuide.render();
-          const firstBlock = blocks[0];
-          if (firstBlock?.type === "text") {
-            styleContent = firstBlock.text;
-          }
-        }
-
-        return section(
-          {
-            name: "package",
-            attrs: { name: p.name },
-            condition: usageGuide || styleGuide,
-          },
-          [
-            section({ name: "usage_guide" }, usageContent),
-            section({ name: "style_guide" }, styleContent),
-            options.listDocs
-              ? section(
-                  { name: "docs" },
-                  p.docs.length
-                    ? p.docs
-                        .filter((d) => !d.name.includes("/"))
-                        .map(
-                          (d) =>
-                            `- [${d.title}](docs:${p.name}:${d.config.name})${
-                              d.description ? `: ${d.description}` : ""
-                            }`,
-                        )
-                        .join("\n")
-                    : null,
-                )
-              : "",
-          ],
+        return p.systemInstructions(
+          options.listDocs ? { listDocs: options.listDocs } : {},
         );
       }),
     );
