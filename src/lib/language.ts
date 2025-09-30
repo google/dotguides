@@ -17,12 +17,14 @@
 import { DartLanguageAdapter } from "./languages/dart.js";
 import { GoLanguageAdapter } from "./languages/go.js";
 import { JavascriptLanguageAdapter } from "./languages/javascript.js";
+import { PythonLanguageAdapter } from "./languages/python.js";
 import type { LanguageAdapter, LanguageContext } from "./language-adapter.js";
 
 export const allLanguages: LanguageAdapter[] = [
   new JavascriptLanguageAdapter(),
   new DartLanguageAdapter(),
   new GoLanguageAdapter(),
+  new PythonLanguageAdapter(),
 ];
 
 export async function detectLanguage(
