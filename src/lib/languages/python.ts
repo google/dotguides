@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { readFile, readdir, stat } from "fs/promises";
+import { readFile, readdir } from "fs/promises";
 import { basename, dirname, isAbsolute, join, resolve, relative } from "path";
 import { parse as parseToml } from "smol-toml";
 import { parse as parseIni } from "ini";
@@ -25,7 +25,6 @@ import type {
   PackageInfo,
 } from "../language-adapter.js";
 import { existsAny, pathExists, readAny } from "../file-utils.js";
-import { cachedFetch } from "../cached-fetch.js";
 import type { Workspace } from "../workspace.js";
 
 const DOTGUIDES_DIR = ".guides";
@@ -604,41 +603,4 @@ export class PythonLanguageAdapter implements LanguageAdapter {
     }
   }
 
-  async discoverContrib(packages: string[]): Promise<string[]> {
-    const discovered: string[] = [];
-    const contribPath = process.env.DOTGUIDES_CONTRIB;
-    if (contribPath) {
-      for (const pkg of packages) {
-        const normalized = normalizePythonPackageName(pkg);
-        const dir = join(contribPath, "python", normalized);
-        try {
-          const stats = await stat(dir);
-          if (stats.isDirectory()) {
-            discovered.push(`file:${dir}`);
-          }
-        } catch (e) {
-          // ignore
-        }
-      }
-      return discovered;
-    }
-
-    const checks = packages.map(async (pkg) => {
-      const normalized = normalizePythonPackageName(pkg);
-      const url = `https://pypi.org/pypi/dotguides-contrib-${normalized}/json`;
-      try {
-        const res = await cachedFetch(url, { method: "HEAD" });
-        if (res.ok) {
-          return pkg;
-        }
-      } catch (e) {
-        // ignore network errors
-      }
-      return null;
-    });
-
-    return (await Promise.all(checks)).filter(
-      (pkg): pkg is string => pkg !== null,
-    );
-  }
 }

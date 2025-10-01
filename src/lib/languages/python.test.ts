@@ -24,12 +24,6 @@ import {
   parseSetupCfg,
 } from "./python.js";
 import type { Workspace } from "../workspace.js";
-import { cachedFetch } from "../cached-fetch.js";
-
-vi.mock("../cached-fetch.js", () => ({
-  cachedFetch: vi.fn(),
-}));
-
 vi.mock("fs/promises", async () => {
   const memfs: { fs: typeof fs } = await vi.importActual("memfs");
   return memfs.fs.promises;
@@ -45,8 +39,6 @@ describe("PythonLanguageAdapter", () => {
     vol.reset();
     delete process.env.UV_PROJECT_ENVIRONMENT;
     delete process.env.VIRTUAL_ENV;
-    delete process.env.DOTGUIDES_CONTRIB;
-    vi.mocked(cachedFetch).mockReset();
   });
 
   it("returns not detected when no Python signals are present", async () => {
@@ -117,29 +109,6 @@ describe("PythonLanguageAdapter", () => {
     const pkg = await adapter.loadPackage(workspace, "/workspace", "pkg");
     expect(pkg.name).toBe("pkg");
     expect(pkg.guides.length).toBeGreaterThan(0);
-  });
-
-  it("discovers contrib packages from DOTGUIDES_CONTRIB", async () => {
-    vol.fromJSON({
-      "/contrib/python/pkg/.guides/usage.md": "",
-    });
-    process.env.DOTGUIDES_CONTRIB = "/contrib";
-
-    const adapter = new PythonLanguageAdapter();
-    const results = await adapter.discoverContrib(["pkg"]);
-    expect(results).toEqual(["file:/contrib/python/pkg"]);
-  });
-
-  it("falls back to PyPI when contrib path is not set", async () => {
-    const mockResponse = { ok: true } as Response;
-    vi.mocked(cachedFetch).mockResolvedValue(mockResponse);
-    const adapter = new PythonLanguageAdapter();
-    const results = await adapter.discoverContrib(["pkg"]);
-    expect(results).toEqual(["pkg"]);
-    expect(cachedFetch).toHaveBeenCalledWith(
-      "https://pypi.org/pypi/dotguides-contrib-pkg/json",
-      { method: "HEAD" },
-    );
   });
 
   it("uses .python-version when no environment version is available", async () => {
