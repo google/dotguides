@@ -24,7 +24,7 @@ import type {
   LanguageContext,
   PackageInfo,
 } from "../language-adapter.js";
-import { existsAny, pathExists, readAny } from "../file-utils.js";
+import { existsAny, isErrnoException, pathExists, readAny } from "../file-utils.js";
 import type { Workspace } from "../workspace.js";
 
 const DOTGUIDES_DIR = ".guides";
@@ -348,10 +348,6 @@ export async function listGuidesInSitePackages(
  */
 export function normalizePythonPackageName(name: string): string {
   return name.replace(/[_.]+/g, "-").toLowerCase();
-}
-
-function isErrnoException(error: unknown): error is NodeJS.ErrnoException {
-  return typeof error === "object" && error !== null && "code" in error;
 }
 
 export function parsePyproject(content: string): WorkspaceMetadata {
