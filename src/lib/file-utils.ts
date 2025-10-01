@@ -102,3 +102,19 @@ export async function writeJsonFile(
   await mkdir(dir, { recursive: true });
   await writeFile(filePath, JSON.stringify(data, null, 2));
 }
+
+export async function pathExists(path: string): Promise<boolean> {
+  try {
+    await stat(path);
+    return true;
+  } catch (error) {
+    if (isErrnoException(error) && error.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+}
+
+export function isErrnoException(error: unknown): error is NodeJS.ErrnoException {
+  return typeof error === "object" && error !== null && "code" in error;
+}
