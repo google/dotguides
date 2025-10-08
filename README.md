@@ -179,7 +179,7 @@ Docs are hierarchical documentation files that can be indexed and discovered by 
 - Top-level `docs/*` files will be listed by default, docs in subdirectories may be indexed for searching but are not listed.
 - You can link to deeply nested docs using `doc:some/nested/doc`
 
-### `.guides/commands/{command_name}.{md|prompt}
+### `.guides/commands/{command_name}.{md|prompt}`
 
 Commands are library-specific tasks that can be manually invoked by the user to perform specific actions. If your library has common repeated tasks (e.g. creating a new route for a web framework) you can define it in a command file.
 
