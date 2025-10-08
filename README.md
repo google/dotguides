@@ -1,5 +1,8 @@
 # Dotguides
 
+> [!WARNING]
+> Dotguides is an experimental project not yet ready for production use.
+
 Dotguides is a convention for LLM-focused documentation and configuration that can be automatically discovered through existing package managers.
 
 To integrate with Dotguides, library authors need only include a `.guides` folder following the specification in the distributed package.
