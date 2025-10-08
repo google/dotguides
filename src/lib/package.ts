@@ -31,7 +31,7 @@ import type { Workspace } from "./workspace.js";
 import { Dotprompt } from "dotprompt";
 import { readFileSync } from "fs";
 import { packageHelpers } from "./prompt-helpers.js";
-import { section } from "./render-utils.js";
+import { countTokens, section } from "./render-utils.js";
 
 export class Package {
   readonly guides: Guide[] = [];
@@ -217,55 +217,75 @@ export class Package {
 
   async systemInstructions(
     options: {
-      listDocs?: boolean;
+      tokenBudget?: number;
     } = {},
   ): Promise<string> {
+    const { tokenBudget = 2000 } = options;
     const usageGuide = this.guides.find((g) => g.config.name === "usage");
     const styleGuide = this.guides.find((g) => g.config.name === "style");
 
-    let usageContent: string | undefined;
-    if (usageGuide) {
-      const blocks = await usageGuide.render();
-      const firstBlock = blocks[0];
-      if (firstBlock?.type === "text") {
-        usageContent = firstBlock.text;
-      }
+    const usageBlocks = usageGuide ? await usageGuide.render() : [];
+    const styleBlocks = styleGuide ? await styleGuide.render() : [];
+
+    const baseDocsList = this.docs.length
+      ? this.docs
+          .filter((d) => !d.name.includes("/"))
+          .map(
+            (d) =>
+              `- [${d.title}](docs:${this.name}:${d.config.name})${
+                d.description ? `: ${d.description}` : ""
+              }`,
+          )
+      : [];
+    const baseDocsString = baseDocsList.join("\n");
+    const docsTokens = Math.round(baseDocsString.length / 4);
+
+    let totalTokens =
+      countTokens(usageBlocks) + countTokens(styleBlocks) + docsTokens;
+
+    let useUsageContent = true;
+    let useStyleContent = true;
+    const extraDocs: string[] = [];
+
+    if (totalTokens > tokenBudget && styleGuide) {
+      useStyleContent = false;
+      totalTokens -= countTokens(styleBlocks);
+      extraDocs.push(
+        `[Style Guide](guides:${this.name}:style) - best practices for coding style with this package`,
+      );
     }
 
-    let styleContent: string | undefined;
-    if (styleGuide) {
-      const blocks = await styleGuide.render();
-      const firstBlock = blocks[0];
-      if (firstBlock?.type === "text") {
-        styleContent = firstBlock.text;
-      }
+    if (totalTokens > tokenBudget && usageGuide) {
+      useUsageContent = false;
+      totalTokens -= countTokens(usageBlocks);
+      extraDocs.push(
+        `[Usage Guide](guides:${this.name}:usage) - ALWAYS read this before trying to use ${this.name}`,
+      );
     }
+
+    const usageContent = useUsageContent
+      ? usageBlocks.map((b) => (b.type === "text" ? b.text : "")).join("\n")
+      : undefined;
+    const styleContent = useStyleContent
+      ? styleBlocks.map((b) => (b.type === "text" ? b.text : "")).join("\n")
+      : undefined;
+
+    const finalDocsList = [...extraDocs, ...baseDocsList];
+    const finalDocsString = finalDocsList.join("\n");
 
     return section(
       {
         name: "package",
         attrs: { name: this.name },
-        condition: usageGuide || styleGuide,
+        condition: usageGuide || styleGuide || this.docs.length > 0,
       },
       [
-        section({ name: "usage_guide" }, usageContent),
-        section({ name: "style_guide" }, styleContent),
-        options.listDocs
-          ? section(
-              { name: "docs" },
-              this.docs.length
-                ? this.docs
-                    .filter((d) => !d.name.includes("/"))
-                    .map(
-                      (d) =>
-                        `- [${d.title}](docs:${this.name}:${d.config.name})${
-                          d.description ? `: ${d.description}` : ""
-                        }`,
-                    )
-                    .join("\n")
-                : null,
-            )
-          : "",
+        section({ name: "usage_guide", condition: usageContent }, usageContent),
+        section({ name: "style_guide", condition: styleContent }, styleContent),
+        section(
+          { name: "docs", condition: finalDocsString.length > 0 },
+          finalDocsString,
+        ),
       ],
     );
   }

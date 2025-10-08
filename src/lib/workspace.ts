@@ -88,7 +88,6 @@ export class Workspace {
     options: {
       selectedPackages?: Package[];
       supportsResources?: boolean;
-      listDocs?: boolean;
       contextBudget?: number;
     } = {},
   ): Promise<string> {
@@ -97,7 +96,9 @@ export class Workspace {
     const packageSections = await Promise.all(
       packagesToUse.map(async (p) => {
         return p.systemInstructions(
-          options.listDocs ? { listDocs: options.listDocs } : {},
+          options.contextBudget
+            ? { tokenBudget: options.contextBudget }
+            : undefined,
         );
       }),
     );

@@ -33,9 +33,7 @@ export const guided = prompt(
           role: "user",
           content: {
             type: "text",
-            text: `${workspace.systemInstructions({
-              listDocs: true,
-            })}\n\n===== USER PROMPT ====\n\n${args.prompt}`,
+            text: `${workspace.systemInstructions()}\n\n===== USER PROMPT ====\n\n${args.prompt}`,
           },
         },
       ],

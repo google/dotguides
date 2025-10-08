@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { readFile } from "fs/promises";
-import { basename, join } from "path";
+import { join } from "path";
 import { existsAny } from "../../lib/file-utils.js";
 import { Package } from "../../lib/package.js";
 import { Workspace } from "../../lib/workspace.js";
 import { countTokens, formatTokenCount } from "../../lib/render-utils.js";
 import { detectLanguage } from "../../lib/language.js";
+import { green, red, yellow } from "../../lib/colors.js";
 
 export async function checkCommand() {
   let pkg: Package | undefined;
@@ -53,6 +53,9 @@ export async function checkCommand() {
     process.exit(1);
   }
 
+  const warnings: string[] = [];
+  const errors: string[] = [];
+
   console.log(`Checking package: ${pkg.name}`);
 
   console.log("\nFeatures:");
@@ -65,6 +68,21 @@ export async function checkCommand() {
       console.log(
         `    - ${guide.config.name} (~${formatTokenCount(tokens)} tokens)`,
       );
+      if (guide.config.name === "usage" || guide.config.name === "style") {
+        if (tokens > 1000) {
+          errors.push(
+            `${guide.config.name} guide is too large: ${formatTokenCount(
+              tokens,
+            )} tokens (max 1000)`,
+          );
+        } else if (tokens >= 700) {
+          warnings.push(
+            `${guide.config.name} guide is getting large: ${formatTokenCount(
+              tokens,
+            )} tokens (warn @ 700)`,
+          );
+        }
+      }
     }
   }
 
@@ -82,6 +100,13 @@ export async function checkCommand() {
     const topLevelDocs = pkg.docs.filter(
       (doc) => !doc.config.name.includes("/"),
     );
+    if (topLevelDocs.length > 10) {
+      errors.push(`Too many top-level docs: ${topLevelDocs.length} (max 10)`);
+    } else if (topLevelDocs.length >= 8) {
+      warnings.push(
+        `Consider nesting some top-level docs: ${topLevelDocs.length} (warn @ 8)`,
+      );
+    }
     for (const doc of topLevelDocs) {
       let line = `    - ${doc.config.name}`;
       if (doc.description) {
@@ -107,6 +132,29 @@ export async function checkCommand() {
     console.log("  Commands:");
     for (const command of pkg.commands) {
       console.log(`    - ${command.signature}`);
+    }
+  }
+
+  console.log("\nLinter Results:");
+  if (warnings.length === 0 && errors.length === 0) {
+    console.log(green("  ✅ All checks passed!"));
+  } else {
+    for (const warning of warnings) {
+      console.log(yellow(`  ⚠️  ${warning}`));
+    }
+    for (const error of errors) {
+      console.log(red(`  🚫 ${error}`));
+    }
+    console.log();
+    if (errors.length > 0) {
+      console.log(
+        red(
+          `Found ${errors.length} error(s) and ${warnings.length} warning(s).`,
+        ),
+      );
+      process.exit(1);
+    } else {
+      console.log(yellow(`Found ${warnings.length} warning(s).`));
     }
   }
 }

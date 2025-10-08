@@ -22,7 +22,6 @@ export async function hookCommand(options?: { agent?: string }): Promise<void> {
 
   const instructions = await workspace.systemInstructions({
     selectedPackages: enabledPackages,
-    listDocs: true,
     contextBudget: budgetMap[contextBudget],
   });
 

@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-import { Workspace } from "../../lib/workspace.js";
+export function red(text: string): string {
+  return `\x1b[31m${text}\x1b[0m`;
+}
 
-export async function rulesCommand() {
-  const workspace = await Workspace.load([process.cwd()]);
-  console.log(await workspace.systemInstructions());
+export function yellow(text: string): string {
+  return `\x1b[33m${text}\x1b[0m`;
+}
+
+export function green(text: string): string {
+  return `\x1b[32m${text}\x1b[0m`;
 }
