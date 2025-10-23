@@ -1,4 +1,4 @@
-# Dotguides: Author's Guide
+# Dotguides Author Guide
 
 # Introduction
 
@@ -6,15 +6,15 @@ Dotguides is a simple and powerful way to provide high-quality contextual guidan
 
 Benefits of Dotguides integration:
 
-- **Simple but powerful.** Dotguides content can be as simple as a few Markdown files but grows with your needs to high-scale complex documentation.
+* **Simple but powerful.** Dotguides content can be as simple as a few Markdown files but grows with your needs to high-scale complex documentation.
 
-- **Strong conventions.** Dotguides provides a few key "guides" (usage, style, setup, and upgrade) that can help your users on their most common journeys.
+* **Strong conventions.** Dotguides provides a few key "guides" (usage, style, setup, and upgrade) that can help your users on their most common journeys.
 
-- **Always up to date.** Because Dotguides content is versioned with your code and delivered with your package, you can be certain that users always have the correct guidance to go with the specific version of your library that they are using.
+* **Always up to date.** Because Dotguides content is versioned with your code and delivered with your package, you can be certain that users always have the correct guidance to go with the specific version of your library that they are using.
 
-- **Dynamically tailored guidance.** Dotguides allows you to insert the content of config files or even the output of shell commands into your provided guidance or conditionally add additional instructions based on the detection of a sibling dependency (e.g. a specific web framework).
+* **Dynamically tailored guidance.** Dotguides allows you to insert the content of config files or even the output of shell commands into your provided guidance or conditionally add additional instructions based on the detection of a sibling dependency (e.g. a specific web framework).
 
-- **Reduced tool load.** Dotguides provides a single set of MCP tools to read and consume guidance and documentation across a user's entire set of dependencies. This avoids confusing models with duplicative and overlapping tools from many different libraries.
+* **Reduced tool load.** Dotguides provides a single set of MCP tools to read and consume guidance and documentation across a user's entire set of dependencies. This avoids confusing models with duplicative and overlapping tools from many different libraries.
 
 # Discovery
 
@@ -28,22 +28,78 @@ Make sure the `.guides` folder is not ignored or excluded from bundling in your 
 
 ## List of Supported Languages
 
-- **Available Now**
-  - JS
-  - Dart
-- **Soon**
-  - Go
-  - Python
+* **Available Now**
+  * JS
+  * Dart
+  * Go
+  * Python
 
-# Getting Started / Dotguides CLI
+*Don't see your library's language here? Join [go/dotguides-chat](https://goto.google.com/dotguides-chat) and talk to us about it\!*
 
-1. Clone this repo.
-2. In the repo directory, run `pnpm build && pnpm link`.
-3. Run `dotguides discover` to make sure the command is linked properly.
+# Getting Started
+
+## 1. Install the Dotguides CLI
+
+```shell
+npm i -g dotguides
+```
+
+Ensure that installation has been successful by running `dotguides --help` to see that it runs.
+
+## 2. Create a .guides folder
+
+In the root directory of your library's package (it *must* be the root directory of the folder that your package is distributed as) run:
+
+```shell
+dotguides create
+```
+
+This will create a scaffold of `.guides` content that can help you get started authoring your own. You can create the files on your own if you prefer.
+
+## 3. Write some basic guidance
+
+Write some basic guidance for your library. The simplest place to start is with a [usage file](#usage.{md|prompt}) since it is automatically included in the generated system context file. If you have an MCP server that is meant to be used by coding agents when using your library, add it to [config.json](#dotguides-config).
+
+**IMPORTANT:** Don't waste your users' tokens! Especially for your usage file, keep it short and sweet.
+
+Once you've written some guidance, you can perform a quick check to make sure the Dotguides tooling picks it all up as expected:
+
+```shell
+dotguides check
+```
+
+## 4. Configure Gemini CLI
+
+Install the local version of your library into a test application directory (using e.g. `npm link` for JS packages). In the application's root directory, run:
+
+```shell
+dotguides up
+```
+
+The `dotguides up` command will prompt you to configure Dotguides for one of the supported coding agents, and may create new configuration / artifacts in the workspace directory.
+
+When your coding agent starts up, you should see the Dotguides MCP server active.
+
+## 5. Test your guidance
+
+Now you're ready to give it a "real world road test" and see if your guidance is working:
+
+1. Ask the agent directly questions about things you know should be in your guidance. If you have a "Wiring up Frobulators" doc, ask the agent "how do I wire up frobulators?"
+2. Ask Gemini CLI to perform a coding task that should be influenced by your guidance. See if it appears to be following the guidance.
+
+Based on your results, continue iterating on your guidance.
+
+## 6. Publish your guidance
+
+Because Dotguides leverages existing package ecosystems, publishing your guidance is simple. Just check it into your repository like you would any other change, and publish a new version of your library\!
+
+Once it's published, installing your library into a project will automatically make it discoverable by the Dotguides tooling.
+
+**Note:** Don't worry about confidentiality in publishing the `.guides` folder, but don't mention Dotguides by name. Make your PR title something innocuous like "adding coding agent guidance files".
 
 # Folder Structure
 
-Everything in the `.guides` folder is optional \- whatever content you place there will be made available.
+Everything in the `.guides` folder is optional -- whatever content you place there will be made available.
 
 ```shell
 .guides/
@@ -68,28 +124,30 @@ Everything in the `.guides` folder is optional \- whatever content you place the
 
 # Dotguides Content
 
+ If you aren’t sure about the token size of your files, `dotguides check` will provide that information for you.
+
 ## `usage.{md|prompt}`
 
 The usage guide is the most impactful Dotguides content as it is intended to be automatically included in the system prompt of integrating coding agents. Your usage guide should be as brief as possible, often just a short bulleted list of concise instructions to either (a) use your package correctly or (b) know when and how to read documentation to do so.
 
-- Usage guides should be **AT MOST 1K tokens** in length.
-- Think of it as explaining the most crucial bits in 30 seconds to someone with a vague understanding of your library (but maybe a couple major versions ago).
-- Stick to core capability guidance, not "best practices" or opinionated style.
+* Usage guides should be **AT MOST 1K tokens** in length.
+* Think of it as explaining the most crucial bits in 30 seconds to someone with a vague understanding of your library (but maybe a couple major versions ago).
+* Stick to core capability guidance, not "best practices" or opinionated style.
 
 ## `style.{md|prompt}`
 
 The style guide provides optional "best practices" that can be more opinionated than the usage guide. It may be included in the system prompt or omitted entirely depending on the user's preferences.
 
-- Style guides should be **AT MOST 1K tokens** in length.
+* Style guides should be **AT MOST 1K tokens** in length.
 
 ## `setup.{md|prompt}`
 
 The setup guide provides a step-by-step "playbook" for getting your library up and running. It is not included in the system prompt but is exposed through custom slash commands or automated install processes.
 
-- Setup guides can be arbitrary length **(recommend \<10K tokens)**.
-- Assume the guide may be run from **any** workspace state, from an empty repo to already completely configured.
-- Make sure the instructions don't lead agents to overwrite existing user configuration and short-circuit steps that are already complete.
-- You can provide instructions to look up files, ask the user questions \- anything that is necessary for your library to be fully setup and usable.
+* Setup guides can be arbitrary length **(recommend \<10K tokens)**.
+* Assume the guide may be run from **any** workspace state, from an empty repo to already completely configured.
+* Make sure the instructions don't lead agents to overwrite existing user configuration and short-circuit steps that are already complete.
+* You can provide instructions to look up files, ask the user questions \- anything that is necessary for your library to be fully setup and usable.
 
 ## `upgrade.{md|prompt}`
 
@@ -97,49 +155,48 @@ The upgrade guide should provide guidance for upgrading from a previous version 
 
 Upgrade guides, like setup guides, are invoked directly.
 
-- Upgrade guides can be arbitrary length (**recommend \<10K tokens**)
-- Think about prompting the agent to search for certain specific code patterns you want to address / upgrade.
+* Upgrade guides can be arbitrary length (**recommend \<10K tokens**)
+* Think about prompting the agent to search for certain specific code patterns you want to address / upgrade.
 
 ## `docs/**/*.{md|prompt}`
 
 Docs provide detailed topic-based information about using your library that can be retrieved on-demand by the agent using the Dotguides `read_docs` MCP tool.
 
-- Docs are hierarchical (you can have nested folders). **Limit top-level docs to \<= 10**, nesting deeper topics inside folders matching the top-level doc (e.g. `.guides/docs/deployment.md` and `.guides/docs/deployment/provider-one.md`).
-- Descriptions should _tell agents when they should read the doc_, for example: "read this to understand how to build multi-step workflows".
-- You can reference docs within themselves or within guides to refer the agent, for example "for more about deployment, see docs:{package_name}/deployment". Make sure to add the `docs:` prefix and don't add a file extension when referencing docs in your content.
+* Docs are hierarchical (you can have nested folders). **Limit top-level docs to \<= 10**, nesting deeper topics inside folders matching the top-level doc (e.g. `.guides/docs/deployment.md` and `.guides/docs/deployment/provider-one.md`).
+* Descriptions should *tell agents when they should read the doc*, for example: "read this to understand how to build multi-step workflows".
+* You can reference docs within themselves or within guides to refer the agent, for example "for more about deployment, see docs:{package\_name}/deployment". Make sure to add the `docs:` prefix and don't add a file extension when referencing docs in your content.
 
 ## `commands/*.{md|prompt}`
 
-Commands are custom prompts that can be used to automate complex repeated tasks for your library such as generating a new route in a web framework or running through a security checklist. Commands can take zero or more arguments that can then be used to inform their behavior.
+Commands allow you to define custom slash commands that will be available in any agent that supports MCP Prompts (e.g. Gemini CLI, Claude Code, Cursor, and Copilot). Commands can optionally have *arguments* that are passed to guide the behavior.
 
-- Commands can be arbitrary length (\*\*recommend \<10K tokens)
-- Commands **SHOULD** be named using `snake_case`
+* Commands are exposed with a package name prefix, e.g. a command called `audit` in a package called `foo` would be exposed as `foo:audit`.
+* There is no set token limit on commands, you can think of them as being step-by-step guides.
+* You can instruct the model to read/write files, run terminal commands, or call MCP tools that are included in your Dotguides package.
+* You can instruct the model to ask the user clarifying questions as needed.
 
-**NOTE:** You _MUST_ use `.prompt` templates to be able to make use of template variables. `.md` files cannot make use of arguments.
+Arguments are specified in frontmatter and consumed using \`{{ arg\_name }}\` templates. Example:
 
-Command arguments are defined in the frontmatter of the file and are directly accessible as input variables in the template itself:
-
-```prompt
+```
 ---
+description: a basic description of what the command does
 arguments:
-  - name: route_name
-    description: the name of the route to generate
-    required: true
-  - name: description
-    description: a description of what the route should do
+  - name: arg1
+    description: what the argument is for
+    required: true # optional, defaults to false
+  - name: arg2
+    description: another description
 ---
 
-Create a new file in `src/routes/{{ route_name }}.ts`.{{#if description}}
-
-Description: {{description}}
-{{/if}}
+Arg1 Value: {{ arg1 }}
+{{#if arg2}}Arg2 Value: {{arg2}}{{/if}}
 ```
 
 ## [COMING SOON] `examples/**/*.*`
 
 A collection of code snippets and samples for your library.
 
-# Dotguides Config
+# `Dotguides Config` {#dotguides-config}
 
 The `.guides/config.json` provides centralized configuration for your package's Dotguides content and settings. The file has the following schema:
 
@@ -165,7 +222,7 @@ interface CommandConfig extends ContentConfig {
     name: string;
     description?: string;
     required?: boolean;
-  }[];
+  }[]
 }
 
 interface DotguidesConfig {
@@ -255,7 +312,4 @@ Check for dep:
 
 Check for substring match:
 {{#if (contains @hints.modelName "gemini") }}
-
-Embed a doc from the package's docs:
-{{ embedDoc "name/of/doc" }}
 ```

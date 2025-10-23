@@ -61,6 +61,11 @@ export class GeminiCliAdapter implements AgentAdapter {
       config.mcpServers,
     );
 
+    console.log(
+      "WRITING",
+      geminiSettingsPath,
+      JSON.stringify(geminiSettings, null, 2),
+    );
     await writeJsonFile(geminiSettingsPath, geminiSettings);
   }
 }

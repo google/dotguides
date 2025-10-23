@@ -22,11 +22,11 @@ import { createCommand } from "./commands/create.js";
 import { discoverCommand } from "./commands/discover.js";
 import { inspectCommand } from "./commands/inspect.js";
 import { rulesCommand } from "./commands/rules.js";
-import { initCommand } from "./commands/init.js";
 import { mcpCommand } from "./commands/mcp.js";
 import { upCommand } from "./commands/up.js";
 import { checkCommand } from "./commands/check.js";
 import { hookCommand } from "./commands/hook.js";
+import { HELP_TEXT } from "./templates.js";
 
 export async function runCli(argv: string[]) {
   const { values, positionals } = parseArgs({
@@ -57,20 +57,7 @@ export async function runCli(argv: string[]) {
   const command = positionals[0];
 
   if (values.help || !command) {
-    console.log("Usage: dotguides <command> [options]");
-    console.log("");
-    console.log("Commands:");
-    console.log("  mcp\t\tStart the MCP server");
-    console.log("  check\t\tCheck the current directory for dotguides content");
-    console.log("  discover\tDiscover .guides content in the workspace");
-    console.log("  inspect\tInspect a specific .guides package");
-    console.log("  rules\t\tOutput the rules for the workspace");
-    console.log("  create\tCreate a new .guides directory with default files");
-    console.log("  init\t\tInitialize a new .guides package");
-    console.log("  up\t\tBootstrap Gemini CLI to use dotguides");
-    console.log(
-      "  hook\t\tOutput system instructions for the workspace for use in agent hooks",
-    );
+    console.log(HELP_TEXT);
     return;
   }
 
@@ -90,9 +77,6 @@ export async function runCli(argv: string[]) {
       break;
     case "rules":
       await rulesCommand();
-      break;
-    case "init":
-      await initCommand();
       break;
     case "create":
       await createCommand();

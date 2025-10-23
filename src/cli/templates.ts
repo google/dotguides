@@ -36,3 +36,26 @@ description: read this doc to learn more about a specific topic
 ---
 Create docs files for detailed topical guides for your library. Top-level files may be automatically listed
 `;
+
+export const HELP_TEXT = `
+USAGE
+  dotguides <command> [options]
+
+USER COMMANDS
+  up           Configures and activates dotguides for the current workspace.
+                  --auto          Automatically configure with default settings.
+                  --ask           Prompt for all configuration options.
+  discover     Discovers all .guides packages in the current workspace.
+  inspect      Inspects a specific dotguides package in the current workspace.
+                  <package-name>  The name of the package to inspect.
+SYSTEM COMMANDS
+  mcp          Starts the MCP (Multi-Context Prompt) server.
+                  [workspace...] List of directories to load (default current).
+  rules        Outputs the system instructions for the current workspace.
+
+AUTHOR COMMANDS
+  create       Creates a starter .guides directory in the current directory.
+  check        Lint/inspect the guidance in the current directory.
+  hook         Outputs system instructions for the current workspace.
+                  --agent <agent-name>   e.g. "claude-code" or "gemini-cli"
+`;
