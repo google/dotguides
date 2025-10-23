@@ -109,6 +109,13 @@ export async function upCommand(options: {
   const workspaceDir = process.cwd();
   const workspace = await Workspace.load([workspaceDir]);
 
+  if (workspace.packages.length === 0 && !options.ask) {
+    log.info(
+      "It looks like none of your dependencies have Dotguides guidance yet.",
+    );
+    return;
+  }
+
   // 1. Select Packages
   const selectedPackages = await handlePackageSelection(workspace, options);
   if (selectedPackages === null) {

@@ -1,6 +1,6 @@
 {
   "name": "dotguides",
-  "version": "0.1.0-preview.5",
+  "version": "0.1.0",
   "type": "module",
   "description": "",
   "main": "dist/index.js",
