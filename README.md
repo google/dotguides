@@ -3,11 +3,13 @@
 > [!WARNING]
 > Dotguides is an experimental project not yet ready for production use.
 
-Dotguides is a convention for LLM-focused documentation and configuration that can be automatically distributed and discovered through existing package managers.
+Dotguides allows open-source library authors to ship high-quality LLM guidance directly inside their packages. Packages with Dotguides can significantly improve the accuracy and quality of code generated for them with popular coding agents.
 
-To integrate with Dotguides, library authors need only include a `.guides` folder following the specification in the distributed package.
+- **Simple to use:** Dotguides can automatically configure popular coding agents like Gemini CLI, Claude Code, Cursor, and GitHub Copilot.
+- **Token-efficient:** Dotguides automatically aggregates and organizes guidance across many packages into a single cohesive system. Dotguides uses progressive disclosure to keep context compact and relevant.
+- **Trustworthy:** Because the guidance content is delivered along with open-source packages it can be trusted to the same level as the dependency itself.
 
-The Dotguides MCP server and toolchain will automatically discover and serve documentation and configuration for any package that includes a `.guides` folder.
+To integrate with Dotguides, library authors need only include a `.guides` folder following the specification in the distributed package. See the [Author's Guide](./docs/authors.md) for more information about adding Dotguides to your package.
 
 ## Getting Started
 
