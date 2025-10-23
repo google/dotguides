@@ -6,6 +6,10 @@
   "bin": {
     "dotguides": "dist/bin/cli.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/google/dotguides.git"
+  },
   "files": [
     "dist"
   ],
