@@ -2,8 +2,7 @@
   "name": "dotguides",
   "version": "0.1.0",
   "type": "module",
-  "description": "",
-  "main": "dist/index.js",
+  "description": "LLM guidance for open-source libraries.",
   "bin": {
     "dotguides": "dist/bin/cli.js"
   },
@@ -16,9 +15,16 @@
     "build:watch": "tsc --watch",
     "prepare": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "llms",
+    "genai",
+    "agents",
+    "mcp",
+    "vibe-coding",
+    "documentation"
+  ],
+  "author": "Google",
+  "license": "Apache-2.0",
   "packageManager": "pnpm@10.13.1",
   "devDependencies": {
     "@types/glob": "^8.1.0",
