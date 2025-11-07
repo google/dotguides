@@ -19,14 +19,24 @@ import { existsAny } from "../../lib/file-utils.js";
 import { Package } from "../../lib/package.js";
 import { Workspace } from "../../lib/workspace.js";
 import { countTokens, formatTokenCount } from "../../lib/render-utils.js";
-import { detectLanguage } from "../../lib/language.js";
+import { allLanguages } from "../../lib/language.js";
+import type { LanguageAdapter, LanguageContext } from "../../lib/language-adapter.js";
 import { green, red, yellow } from "../../lib/colors.js";
 
 export async function checkCommand() {
   let pkg: Package | undefined;
   const loadPath = process.cwd();
 
-  const [adapter, context] = await detectLanguage(loadPath);
+  let adapter: LanguageAdapter | undefined;
+  let context: LanguageContext | undefined;
+  for (const lang of allLanguages) {
+    const maybeContext = await lang.discover(loadPath);
+    if (maybeContext.detected) {
+      adapter = lang;
+      context = maybeContext;
+      break;
+    }
+  }
   if (adapter && context) {
     const workspace = new Workspace([loadPath]);
     workspace.languages.push(context);

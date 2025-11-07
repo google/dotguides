@@ -1,0 +1,4 @@
+The usage guide should be a concise (<1K tokens) summary of the most important usage information for your library.
+
+- Consider mentioning that that package is version {{ @packageVersion }} to help ground the model.
+- Test your usage guide against common tasks to see if it improves model accuracy.

@@ -1,0 +1,10 @@
+{
+  "packages": {
+    "disabled": [],
+    "discovered": [
+      "Dummy1"
+    ]
+  },
+  "agent": "gemini-cli",
+  "contextBudget": "medium"
+}

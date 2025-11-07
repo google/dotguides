@@ -15,11 +15,11 @@
  */
 
 import { Package } from "./package.js";
-import {
-  type LanguageAdapter,
-  type LanguageContext,
-  packagesWithGuides,
+import type {
+  LanguageAdapter,
+  LanguageContext,
 } from "./language-adapter.js";
+import { packagesWithGuides } from "./language.js";
 import { allLanguages } from "./language.js";
 import { renderDetails, section } from "./render-utils.js";
 import type { Doc } from "./doc.js";
@@ -45,7 +45,11 @@ export class Workspace {
         const context = await adapter.discover(directory);
         if (context.detected) {
           this.languages.push(context);
-          for (const packageInfo of packagesWithGuides(context.packages)) {
+          const allPackages = context.packages.slice();
+          if (context.workspacePackage) {
+            allPackages.push(context.workspacePackage);
+          }
+          for (const packageInfo of packagesWithGuides(allPackages)) {
             const pkg = await adapter.loadPackage(
               this,
               directory,

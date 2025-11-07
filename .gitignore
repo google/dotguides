@@ -4,3 +4,4 @@ package-lock.json
 firebase-debug.log
 .firebase
 .genkit
+.DS_Store
