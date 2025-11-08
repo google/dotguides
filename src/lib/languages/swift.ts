@@ -21,15 +21,9 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
   }
 
   async discover(directory: string): Promise<LanguageContext> {
-
-
     const packageSwiftPath = await existsAny(directory, "Package.swift");
     const entries = await readdir(directory, { withFileTypes: true });
     const xcodeprojEntry = entries.find((e) => e.isDirectory() && e.name.endsWith(".xcodeproj"));
-
-
-
-
 
     if (!packageSwiftPath && !xcodeprojEntry) {
       return {
@@ -53,8 +47,6 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
         const nameMatch = packageSwiftContents.match(/name: "([^"]+)"/);
         const packageName = nameMatch ? nameMatch[1] || 'unknown' : 'unknown';
 
-
-
         const workspacePackage: PackageInfo = {
           name: packageName,
           packageVersion: 'unknown',
@@ -71,7 +63,6 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
           const url = match[1];
           if (!url) continue;
           const name = url.substring(url.lastIndexOf('/') + 1).replace('.git', '');
-
 
           const pkg: PackageInfo = {
             name: name,
@@ -91,7 +82,6 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
     if (xcodeprojEntry) {
       try {
         const projectPath = join(directory, xcodeprojEntry.name, 'project.pbxproj');
-
 
         const project = XcodeProject.open(projectPath);
         const objects = project.toJSON().objects;
@@ -157,8 +147,6 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
       }
     }
 
-
-
     return context;
   }
 
@@ -190,7 +178,6 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
       // find command fails if it doesn't find anything
     }
 
-
     return 'unknown';
   }
 
@@ -206,5 +193,3 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
     throw new Error(`Could not find guides for Swift package '${name}'.`);
   }
 }
-
-
