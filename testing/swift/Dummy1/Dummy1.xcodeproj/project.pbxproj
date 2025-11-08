@@ -10,6 +10,7 @@
 		88412CBF2EBDFD3300725E6C /* dummy-package in Frameworks */ = {isa = PBXBuildFile; productRef = 88412CBE2EBDFD3300725E6C /* dummy-package */; };
 		88423FA72EBDFD6F003D20DC /* dummy-package in Frameworks */ = {isa = PBXBuildFile; productRef = 88423FA62EBDFD6F003D20DC /* dummy-package */; };
 		88423FAA2EBE00FA003D20DC /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 88423FA92EBE00FA003D20DC /* Algorithms */; };
+		88691F1B2EBFAE63009240AC /* sample-swift-package in Frameworks */ = {isa = PBXBuildFile; productRef = 88691F1A2EBFAE63009240AC /* sample-swift-package */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				88423FAA2EBE00FA003D20DC /* Algorithms in Frameworks */,
+				88691F1B2EBFAE63009240AC /* sample-swift-package in Frameworks */,
 				88423FA72EBDFD6F003D20DC /* dummy-package in Frameworks */,
 				88412CBF2EBDFD3300725E6C /* dummy-package in Frameworks */,
 			);
@@ -77,6 +79,7 @@
 				88412CBE2EBDFD3300725E6C /* dummy-package */,
 				88423FA62EBDFD6F003D20DC /* dummy-package */,
 				88423FA92EBE00FA003D20DC /* Algorithms */,
+				88691F1A2EBFAE63009240AC /* sample-swift-package */,
 			);
 			productName = Dummy1;
 			productReference = 88D97BB22EBDF36200F141D2 /* Dummy1.app */;
@@ -109,6 +112,7 @@
 			packageReferences = (
 				88423FA52EBDFD6F003D20DC /* XCLocalSwiftPackageReference "../dummy-package" */,
 				88423FA82EBE00FA003D20DC /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				88691F192EBFAE63009240AC /* XCRemoteSwiftPackageReference "sample-swift-package" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 88D97BB32EBDF36200F141D2 /* Products */;
@@ -365,6 +369,14 @@
 				minimumVersion = 1.2.1;
 			};
 		};
+		88691F192EBFAE63009240AC /* XCRemoteSwiftPackageReference "sample-swift-package" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/peterfriese/sample-swift-package";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -380,6 +392,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 88423FA82EBE00FA003D20DC /* XCRemoteSwiftPackageReference "swift-algorithms" */;
 			productName = Algorithms;
+		};
+		88691F1A2EBFAE63009240AC /* sample-swift-package */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 88691F192EBFAE63009240AC /* XCRemoteSwiftPackageReference "sample-swift-package" */;
+			productName = "sample-swift-package";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

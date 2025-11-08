@@ -5,3 +5,5 @@ firebase-debug.log
 .firebase
 .genkit
 .DS_Store
+/testing/swift/dummy-package/build
+/testing/swift/Dummy1/build

@@ -1,6 +1,8 @@
 
 import { readFile, readdir } from "fs/promises";
 import { join } from "path";
+import { XcodeProject } from '@bacons/xcode';
+import * as path from 'path';
 import type { LanguageAdapter, LanguageContext, PackageInfo } from "../language-adapter.js";
 import { Package } from "../package.js";
 import { sh } from "../shell-utils.js";
@@ -8,15 +10,26 @@ import type { Workspace } from "../workspace.js";
 import { existsAny } from "../file-utils.js";
 
 export class SwiftLanguageAdapter implements LanguageAdapter {
+  private derivedDataPath: string;
   private packageMap = new Map<string, PackageInfo>();
+
+  constructor(derivedDataPath?: string) {
+    this.derivedDataPath = derivedDataPath || join(process.env.HOME || '~', 'Library/Developer/Xcode/DerivedData');
+  }
   get language(): string {
     return "swift";
   }
 
   async discover(directory: string): Promise<LanguageContext> {
+
+
     const packageSwiftPath = await existsAny(directory, "Package.swift");
     const entries = await readdir(directory, { withFileTypes: true });
     const xcodeprojEntry = entries.find((e) => e.isDirectory() && e.name.endsWith(".xcodeproj"));
+
+
+
+
 
     if (!packageSwiftPath && !xcodeprojEntry) {
       return {
@@ -35,46 +48,37 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
 
     if (packageSwiftPath) {
       try {
-        const { stdout } = await sh("swift package dump-package", { cwd: directory });
-        const { stdout: packageDataJson } = await sh("swift package dump-package", { cwd: directory });
-        const packageData = JSON.parse(packageDataJson);
+        const packageSwiftContents = await readFile(packageSwiftPath, "utf-8");
+
+        const nameMatch = packageSwiftContents.match(/name: "([^"]+)"/);
+        const packageName = nameMatch ? nameMatch[1] || 'unknown' : 'unknown';
+
+
+
         const workspacePackage: PackageInfo = {
-          name: packageData.name,
-          packageVersion: packageData.version || "unknown",
-          dependencyVersion: packageData.version || "unknown",
+          name: packageName,
+          packageVersion: 'unknown',
+          dependencyVersion: 'unknown',
           dir: directory,
           guides: !!(await existsAny(directory, ".guides")),
         };
         context.workspacePackage = workspacePackage;
         this.packageMap.set(workspacePackage.name, workspacePackage);
 
-        const { stdout: depsStdout } = await sh("swift package show-dependencies --format json", { cwd: directory });
-        const depsData = JSON.parse(depsStdout);
+        const dependencyRegex = /.package\(url: "([^\)]+)",/g;
+        let match;
+        while ((match = dependencyRegex.exec(packageSwiftContents)) !== null) {
+          const url = match[1];
+          if (!url) continue;
+          const name = url.substring(url.lastIndexOf('/') + 1).replace('.git', '');
 
-        const depMap = new Map<string, { path: string; version: string }>();
-        const collectDeps = (node: any) => {
-          if (!node) return;
-          depMap.set(node.name, { path: node.path, version: node.version });
-          if (node.dependencies) {
-            for (const dep of node.dependencies) {
-              collectDeps(dep);
-            }
-          }
-        };
-        collectDeps(depsData);
-
-        const dependencies = packageData.dependencies || [];
-        for (const [name, dep] of depMap.entries()) {
-          const depPath = dep.path || "unknown";
-          const guidesDir = join(depPath, ".guides");
-          const hasGuides = !!(await existsAny(null, guidesDir));
 
           const pkg: PackageInfo = {
             name: name,
-            dependencyVersion: dep.version || "unknown",
-            packageVersion: dep.version || "unknown",
-            dir: depPath,
-            guides: hasGuides,
+            dependencyVersion: 'unknown',
+            packageVersion: 'unknown',
+            dir: 'unknown', // We can't know the directory without resolving the package
+            guides: false, // We can't know if there are guides without resolving the package
           };
           context.packages.push(pkg);
           this.packageMap.set(pkg.name, pkg);
@@ -86,47 +90,66 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
 
     if (xcodeprojEntry) {
       try {
-        const { stdout: resolveOutput } = await sh(`xcodebuild -resolvePackageDependencies -project ${xcodeprojEntry.name}`, { cwd: directory });
-        const resolvedPackagesSectionRegex = /Resolved source packages:([\s\S]*?)(?:\n\n|resolved source packages:|$)/;
-        const resolvedPackagesMatch = resolveOutput.match(resolvedPackagesSectionRegex);
+        const projectPath = join(directory, xcodeprojEntry.name, 'project.pbxproj');
 
-        if (resolvedPackagesMatch && resolvedPackagesMatch[1]) {
-          const packageSection = resolvedPackagesMatch[1];
-          const packageRegex = /^\s*([^:\s]+):\s+([^\s]+)\s+@\s+(.*)$/gm;
-          let match;
-          while ((match = packageRegex.exec(packageSection)) !== null) {
-            const name = match[1];
-            const location = match[2];
 
-            if (!name || !location) {
-              continue;
-            }
+        const project = XcodeProject.open(projectPath);
+        const objects = project.toJSON().objects;
+
+        const nativeTargets = Object.values(objects).filter((obj: any) => obj.isa === 'PBXNativeTarget');
+        for (const target of nativeTargets) {
+          const productDeps = (target as any).packageProductDependencies || [];
+          for (const depId of productDeps) {
+            const productDependency = objects[depId] as any;
+            if (!productDependency) continue;
+
+            const packageName = productDependency.productName;
+
+            // Find the corresponding package reference to determine if it's local or remote
+            const packageRefId = productDependency.package;
+            const packageRef = objects[packageRefId] as any;
 
             let pkgPath: string;
-            if (location.startsWith('/')) {
-              pkgPath = location;
+            let name: string;
+
+            // Find all local package references first
+            const localPackageRefs = Object.values(objects).filter((obj: any) => obj.isa === 'XCLocalSwiftPackageReference');
+
+            if (packageRef && packageRef.isa === 'XCRemoteSwiftPackageReference') {
+              const url = (packageRef as any).repositoryURL;
+              name = url.substring(url.lastIndexOf('/') + 1).replace('.git', '');
+
+              const projectName = xcodeprojEntry.name.replace('.xcodeproj', '');
+              pkgPath = await this.findPackagePath(name, projectName);
             } else {
-              const projectName = xcodeprojEntry.name.replace(".xcodeproj", "");
-              const { stdout: derivedDataPath } = await sh(`/usr/bin/find ~/Library/Developer/Xcode/DerivedData -name "${projectName}-*" -maxdepth 1 -type d 2>/dev/null | head -n 1 | while read path; do echo "$path/SourcePackages/checkouts"; done`, { cwd: directory });
-              const checkoutsPath = derivedDataPath.trim();
-              if (checkoutsPath) {
-                pkgPath = join(checkoutsPath, name);
+              // Assume it's a local package. Find the corresponding reference.
+              // This is a bit of a guess, as there's no direct link.
+              const localRef = localPackageRefs.find((ref: any) => (productDependency as any).productName.startsWith(path.basename(ref.relativePath)));
+              if (localRef) {
+                const relativePath = (localRef as any).relativePath;
+                pkgPath = join(directory, relativePath);
+                name = path.basename(pkgPath);
+
               } else {
-                continue;
+                // If we can't find a local reference, we'll have to fall back to searching DerivedData
+                name = (productDependency as any).productName;
+
+                const projectName = xcodeprojEntry.name.replace('.xcodeproj', '');
+                pkgPath = await this.findPackagePath(name, projectName);
               }
             }
 
             const guidesDir = join(pkgPath, ".guides");
             const hasGuides = !!(await existsAny(null, guidesDir));
-            const pkg: PackageInfo = {
+            const packageInfo: PackageInfo = {
               name: name,
-              dependencyVersion: "unknown",
-              packageVersion: "unknown",
+              dependencyVersion: 'unknown',
+              packageVersion: 'unknown',
               dir: pkgPath,
               guides: hasGuides,
             };
-            context.packages.push(pkg);
-            this.packageMap.set(pkg.name, pkg);
+            context.packages.push(packageInfo);
+            this.packageMap.set(packageInfo.name, packageInfo);
           }
         }
       } catch (e) {
@@ -134,7 +157,41 @@ export class SwiftLanguageAdapter implements LanguageAdapter {
       }
     }
 
+
+
     return context;
+  }
+
+  private async findPackagePath(name: string, projectName?: string): Promise<string> {
+    console.log(`[Swift] Searching for package '${name}' in ${this.derivedDataPath}...`);
+
+    try {
+      let searchPath = this.derivedDataPath;
+      if (projectName) {
+        try {
+          const { stdout: projectDerivedData } = await sh(`find "${this.derivedDataPath}" -maxdepth 1 -type d -name "${projectName}-*"`);
+          const firstPath = projectDerivedData.trim().split('\n')[0];
+          if (firstPath) {
+            searchPath = join(firstPath, 'SourcePackages', 'checkouts');
+          }
+        } catch (e) {
+          // Ignore if we can't find a project-specific path, we'll just search the whole directory
+        }
+      }
+
+      const { stdout } = await sh(`find "${searchPath}" -maxdepth 1 -type d -name "${name}"`);
+      const foundPath = stdout.trim();
+      if (foundPath) {
+
+
+        return foundPath;
+      }
+    } catch (e) {
+      // find command fails if it doesn't find anything
+    }
+
+
+    return 'unknown';
   }
 
   async loadPackage(workspace: Workspace, directory: string, name: string): Promise<Package> {

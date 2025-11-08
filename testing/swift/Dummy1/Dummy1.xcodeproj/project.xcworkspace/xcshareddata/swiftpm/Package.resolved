@@ -1,6 +1,15 @@
 {
-  "originHash" : "4870ccf85b8952b890a130321899e63a085e0f83c20a0bba22dd5fb24a04557c",
+  "originHash" : "bebc7d3b10d849fc7465b8f9d47ede49b4e7fe9d0cad514e012f34cb9de9424c",
   "pins" : [
+    {
+      "identity" : "sample-swift-package",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/peterfriese/sample-swift-package",
+      "state" : {
+        "revision" : "52dd3f2f016372fae4f643501d10d7dc4bdcef57",
+        "version" : "1.0.0"
+      }
+    },
     {
       "identity" : "swift-algorithms",
       "kind" : "remoteSourceControl",
