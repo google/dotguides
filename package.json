@@ -40,6 +40,7 @@
     "vitest": "^1.6.0"
   },
   "dependencies": {
+    "@bacons/xcode": "^1.0.0-alpha.27",
     "@clack/prompts": "^0.11.0",
     "@modelcontextprotocol/sdk": "^1.17.3",
     "@types/semver": "^7.7.0",

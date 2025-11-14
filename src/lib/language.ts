@@ -18,13 +18,15 @@ import { DartLanguageAdapter } from "./languages/dart.js";
 import { GoLanguageAdapter } from "./languages/go.js";
 import { JavascriptLanguageAdapter } from "./languages/javascript.js";
 import { PythonLanguageAdapter } from "./languages/python.js";
-import type { LanguageAdapter, LanguageContext } from "./language-adapter.js";
+import { SwiftLanguageAdapter } from "./languages/swift.js";
+import type { LanguageAdapter, LanguageContext, PackageInfo } from "./language-adapter.js";
 
 export const allLanguages: LanguageAdapter[] = [
   new JavascriptLanguageAdapter(),
   new DartLanguageAdapter(),
   new GoLanguageAdapter(),
   new PythonLanguageAdapter(),
+  new SwiftLanguageAdapter(),
 ];
 
 export async function detectLanguage(
@@ -37,4 +39,10 @@ export async function detectLanguage(
     }
   }
   return [null, null];
+}
+
+export function packagesWithGuides(
+  packages: PackageInfo[],
+): PackageInfo[] {
+  return packages.filter((p) => p.guides);
 }
