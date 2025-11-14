@@ -39,4 +39,4 @@ Unit tests have been added in `src/lib/languages/swift.test.ts`. The tests cover
 
 ## 5. Dependencies
 
-The implementation will not require the user to have the Swift toolchain installed.
+The implementation will not require the user to have the Swift toolchain installed. Nice!
