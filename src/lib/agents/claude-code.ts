@@ -84,6 +84,21 @@ export class ClaudeCodeAdapter implements AgentAdapter {
       config.mcpServers,
     );
     await writeJsonFile(mcpConfigPath, { mcpServers });
+
+    if (Object.keys(mcpServers).length > 0) {
+      const settingsPath = path.join(
+        workspaceDir,
+        ".claude",
+        "settings.local.json",
+      );
+      const settings = await readJsonFile<Record<string, any>>(
+        settingsPath,
+        {},
+      );
+      settings.enableAllProjectMcpServers = true;
+      await writeJsonFile(settingsPath, settings);
+    }
+
     log.success("MCP servers configured successfully for Claude Code.");
   }
 
