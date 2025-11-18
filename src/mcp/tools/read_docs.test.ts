@@ -32,6 +32,7 @@ describe("read_docs tool", () => {
     const mockWorkspace = {
       doc: vi.fn().mockReturnValue(mockDoc),
       guide: vi.fn(),
+      package: vi.fn(),
     } as unknown as Workspace;
 
     const result = await read_docs.fn(
@@ -55,6 +56,7 @@ describe("read_docs tool", () => {
     const mockWorkspace = {
       doc: vi.fn(),
       guide: vi.fn().mockReturnValue(mockGuide),
+      package: vi.fn(),
     } as unknown as Workspace;
 
     const result = await read_docs.fn(
@@ -65,5 +67,45 @@ describe("read_docs tool", () => {
     expect(mockWorkspace.guide).toHaveBeenCalledWith("test-pkg", "test-guide");
     expect(result.content).toHaveLength(1);
     expect(result.content[0]!.text).toContain("Hello, guide!");
+
+  });
+
+  it("should include links to child docs", async () => {
+    const mockDoc = {
+      name: "parent-doc",
+      config: { name: "parent-doc" },
+      render: vi
+        .fn()
+        .mockResolvedValue([{ type: "text", text: "Parent content" }]),
+    } as unknown as Doc;
+
+    const mockChildDoc = {
+      name: "parent-doc/child",
+      title: "Child Doc",
+      description: "A child document",
+      config: { name: "parent-doc/child" },
+    } as unknown as Doc;
+
+    const mockPackage = {
+      docs: [mockDoc, mockChildDoc],
+    };
+
+    const mockWorkspace = {
+      doc: vi.fn().mockReturnValue(mockDoc),
+      package: vi.fn().mockReturnValue(mockPackage),
+    } as unknown as Workspace;
+
+    const result = await read_docs.fn(
+      { uris: ["docs:test-pkg:parent-doc"] },
+      { workspace: mockWorkspace },
+    );
+
+    expect(result.content).toHaveLength(1);
+    const text = result.content[0]!.text;
+    expect(text).toContain("Parent content");
+    expect(text).toContain("<related-docs>");
+    expect(text).toContain(
+      "- [Child Doc](docs:test-pkg:parent-doc/child): A child document",
+    );
   });
 });

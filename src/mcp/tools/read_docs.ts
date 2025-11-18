@@ -58,13 +58,38 @@ export const read_docs = tool(
               packages: [],
             },
           });
-          const text = content
+          let text = content
             .map((c) => ("text" in c ? c.text : ""))
             .join("\n");
+
+          if (isDoc) {
+            const p = workspace.package(pkg || "");
+            if (p) {
+              const childDocs = p.docs.filter((d) =>
+                d.name.startsWith(name + "/"),
+              );
+              if (childDocs.length > 0) {
+                const childDocsList = childDocs
+                  .map(
+                    (d) =>
+                      `- [${d.title}](docs:${pkg}:${d.name})${d.description ? `: ${d.description}` : ""
+                      }`,
+                  )
+                  .join("\n");
+                text +=
+                  "\n\n" +
+                  section({ name: "related-docs" }, childDocsList);
+              }
+            }
+          }
+
           return {
             type: "text" as const,
             text: section(
-              { name: isDoc ? "doc" : "guide", attrs: { package: pkg, name } },
+              {
+                name: isDoc ? "doc" : "guide",
+                attrs: { package: pkg || "", name: name || "" },
+              },
               text,
             ),
           };
