@@ -21,7 +21,8 @@ import { Workspace } from "../../lib/workspace.js";
 import { countTokens, formatTokenCount } from "../../lib/render-utils.js";
 import { allLanguages } from "../../lib/language.js";
 import type { LanguageAdapter, LanguageContext } from "../../lib/language-adapter.js";
-import { green, red, yellow } from "../../lib/colors.js";
+import { bold, cyan, dim, green, red, yellow } from "../../lib/colors.js";
+import { calculateTokenBudget } from "../../lib/token-budget.js";
 
 export async function checkCommand() {
   let pkg: Package | undefined;
@@ -66,9 +67,9 @@ export async function checkCommand() {
   const warnings: string[] = [];
   const errors: string[] = [];
 
-  console.log(`Checking package: ${pkg.name}`);
+  console.log(bold(`\nChecking package: ${cyan(pkg.name)}`));
 
-  console.log("\nFeatures:");
+  console.log(bold("\nFeatures:"));
 
   if (pkg.guides.length > 0) {
     console.log("  Guides:");
@@ -76,23 +77,8 @@ export async function checkCommand() {
       const content = await guide.render();
       const tokens = countTokens(content);
       console.log(
-        `    - ${guide.config.name} (~${formatTokenCount(tokens)} tokens)`,
+        `    - ${cyan(guide.config.name)} ${dim(`(~${formatTokenCount(tokens)} tokens)`)}`,
       );
-      if (guide.config.name === "usage" || guide.config.name === "style") {
-        if (tokens > 1000) {
-          errors.push(
-            `${guide.config.name} guide is too large: ${formatTokenCount(
-              tokens,
-            )} tokens (max 1000)`,
-          );
-        } else if (tokens >= 700) {
-          warnings.push(
-            `${guide.config.name} guide is getting large: ${formatTokenCount(
-              tokens,
-            )} tokens (warn @ 700)`,
-          );
-        }
-      }
     }
   }
 
@@ -103,24 +89,15 @@ export async function checkCommand() {
       totalTokens += countTokens(content);
     }
     console.log(
-      `  Docs: ${pkg.docs.length} discovered (~${formatTokenCount(
-        totalTokens,
-      )} tokens)`,
+      `  Docs: ${pkg.docs.length} discovered ${dim(`(~${formatTokenCount(totalTokens)} tokens)`)}`,
     );
     const topLevelDocs = pkg.docs.filter(
       (doc) => !doc.config.name.includes("/"),
     );
-    if (topLevelDocs.length > 10) {
-      errors.push(`Too many top-level docs: ${topLevelDocs.length} (max 10)`);
-    } else if (topLevelDocs.length >= 8) {
-      warnings.push(
-        `Consider nesting some top-level docs: ${topLevelDocs.length} (warn @ 8)`,
-      );
-    }
     for (const doc of topLevelDocs) {
-      let line = `    - ${doc.config.name}`;
+      let line = `    - ${cyan(doc.config.name)}`;
       if (doc.description) {
-        line += `: ${doc.description}`;
+        line += `: ${dim(doc.description)}`;
       }
       console.log(line);
     }
@@ -134,37 +111,38 @@ export async function checkCommand() {
       }
     }
     for (const [dir, count] of Object.entries(subDirDocs)) {
-      console.log(`    - ${dir}/ (${count} docs)`);
+      console.log(`    - ${cyan(dir + "/")} ${dim(`(${count} docs)`)}`);
     }
   }
 
   if (pkg.commands.length > 0) {
     console.log("  Commands:");
     for (const command of pkg.commands) {
-      console.log(`    - ${command.signature}`);
+      console.log(`    - ${cyan(command.signature)}`);
     }
   }
 
-  console.log("\nLinter Results:");
-  if (warnings.length === 0 && errors.length === 0) {
-    console.log(green("  ✅ All checks passed!"));
+  console.log(bold("\nToken Budget:"));
+  const budget = await calculateTokenBudget(pkg);
+
+  const pad = (label: string) => label.padEnd(10);
+
+  console.log(`  ${pad("Usage:")} ${formatTokenCount(budget.usage)}`);
+  console.log(`  ${pad("Style:")} ${formatTokenCount(budget.style)}`);
+  console.log(`  ${pad("Docs:")} ${formatTokenCount(budget.docs)}`);
+  console.log(`  ${pad("Clerical:")} ${formatTokenCount(budget.clerical)}`);
+  console.log(dim("  " + "-".repeat(20)));
+
+  const totalStr = `${pad("Total:")} ${formatTokenCount(budget.total)}`;
+  if (budget.total < 1500) {
+    console.log(green(`  ${totalStr}`));
+    console.log(green(bold("\n  ✅ Budget check passed!")));
+  } else if (budget.total <= 2000) {
+    console.log(yellow(`  ${totalStr}`));
+    console.log(yellow(bold("\n  ⚠️  Budget warning: Total tokens between 1500 and 2000.")));
   } else {
-    for (const warning of warnings) {
-      console.log(yellow(`  ⚠️  ${warning}`));
-    }
-    for (const error of errors) {
-      console.log(red(`  🚫 ${error}`));
-    }
-    console.log();
-    if (errors.length > 0) {
-      console.log(
-        red(
-          `Found ${errors.length} error(s) and ${warnings.length} warning(s).`,
-        ),
-      );
-      process.exit(1);
-    } else {
-      console.log(yellow(`Found ${warnings.length} warning(s).`));
-    }
+    console.log(red(`  ${totalStr}`));
+    console.log(red(bold("\n  🚫 Budget exceeded: Total tokens > 2000.")));
+    process.exit(1);
   }
 }

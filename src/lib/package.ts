@@ -215,6 +215,18 @@ export class Package {
       .filter((p): p is ContentConfig => p !== null);
   }
 
+  getDocsList(): string[] {
+    return this.docs.length
+      ? this.docs
+        .filter((d) => !d.name.includes("/"))
+        .map(
+          (d) =>
+            `- [${d.title}](docs:${this.name}:${d.config.name})${d.description ? `: ${d.description}` : ""
+            }`,
+        )
+      : [];
+  }
+
   async systemInstructions(
     options: {
       tokenBudget?: number;
@@ -227,16 +239,7 @@ export class Package {
     const usageBlocks = usageGuide ? await usageGuide.render() : [];
     const styleBlocks = styleGuide ? await styleGuide.render() : [];
 
-    const baseDocsList = this.docs.length
-      ? this.docs
-          .filter((d) => !d.name.includes("/"))
-          .map(
-            (d) =>
-              `- [${d.title}](docs:${this.name}:${d.config.name})${
-                d.description ? `: ${d.description}` : ""
-              }`,
-          )
-      : [];
+    const baseDocsList = this.getDocsList();
     const baseDocsString = baseDocsList.join("\n");
     const docsTokens = Math.round(baseDocsString.length / 4);
 
