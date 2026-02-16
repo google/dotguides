@@ -7,7 +7,7 @@ PACKAGE_NAME="dotguides-${VERSION}.tgz"
 
 pnpm pack
 
-gsutil cp "${PACKAGE_NAME}" "gs://dotguides-preview/dotguides-${VERSION}.tgz"
-gsutil cp "${PACKAGE_NAME}" "gs://dotguides-preview/dotguides-latest.tgz"
+gcloud storage cp "${PACKAGE_NAME}" "gs://dotguides-preview/dotguides-${VERSION}.tgz"
+gcloud storage cp "${PACKAGE_NAME}" "gs://dotguides-preview/dotguides-latest.tgz"
 
 rm "${PACKAGE_NAME}"
